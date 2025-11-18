@@ -44,8 +44,12 @@ const parseFeatureFlags = (raw) => {
   return flags;
 };
 
-// Determine base API URL with sane defaults
-const DEFAULT_API_BASE = `${window.location.origin.replace(/:\d+$/, "")}:3001`;
+/**
+ * Determine base API URL with sane defaults.
+ * - Default to http://localhost:3001 for local development as required.
+ * - If running behind a proxy/alternate host, REACT_APP_API_BASE or REACT_APP_BACKEND_URL can override.
+ */
+const DEFAULT_API_BASE = "http://localhost:3001";
 // Prefer REACT_APP_API_BASE, then REACT_APP_BACKEND_URL, then default
 const API_BASE =
   process.env.REACT_APP_API_BASE?.trim() ||
