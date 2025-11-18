@@ -1,0 +1,48 @@
+/* Ocean Professional Theme */
+:root {
+  --primary: #2563EB;         /* Blue 600 */
+  --secondary: #F59E0B;       /* Amber 500 */
+  --success: #F59E0B;         /* Align success with secondary accent */
+  --error: #EF4444;           /* Red 500 */
+  --background: #f9fafb;      /* Gray 50 */
+  --surface: #ffffff;         /* White */
+  --text: #111827;            /* Gray 900 */
+  --muted: #6b7280;           /* Gray 500 */
+  --border: rgba(17,24,39,0.08);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 8px 24px rgba(17,24,39,0.08);
+
+  --gradient-bg: linear-gradient(135deg, rgba(37,99,235,0.10), rgba(249,250,251,1));
+}
+
+/* Global baseline */
+html, body {
+  background: var(--background);
+  color: var(--text);
+}
+
+/* Links with subtle accent hover */
+a:hover {
+  color: var(--primary);
+}
+
+/* Custom active state for nav links */
+.nav-link {
+  background: transparent;
+}
+.nav-link:hover {
+  background: rgba(37,99,235,0.06);
+}
+.nav-link.active {
+  background: rgba(37,99,235,0.10);
+  border: 1px solid rgba(37,99,235,0.18);
+  color: var(--text);
+}
+
+/* Subtle gradient header helper (if needed elsewhere) */
+.surface-gradient {
+  background: var(--gradient-bg);
+}
