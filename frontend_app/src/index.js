@@ -4,12 +4,15 @@ import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import './styles/theme.css';
 import App from './App';
+import { AppStateProvider } from './state/store';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <AppStateProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </AppStateProvider>
   </React.StrictMode>
 );
