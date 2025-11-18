@@ -104,11 +104,7 @@ export default function SkillsCatalog() {
         <div
           role="list"
           aria-label="Skill list"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1rem'
-          }}
+          className="grid-autofit"
         >
           {filtered.map((s) => (
             <article key={s.id} role="listitem" className="card" style={{ padding: '1rem' }}>
@@ -127,7 +123,7 @@ export default function SkillsCatalog() {
           ))}
           {!filtered.length && !state.ui.error && (
             <div className="card" style={{ padding: '1rem' }}>
-              <p style={{ margin: 0, color: 'var(--muted)' }}>No skills found.</p>
+              <p className="empty-state" style={{ margin: 0 }}>No skills found.</p>
             </div>
           )}
         </div>

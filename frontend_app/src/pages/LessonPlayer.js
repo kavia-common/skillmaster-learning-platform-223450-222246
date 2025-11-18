@@ -146,7 +146,7 @@ export default function LessonPlayer() {
       <div className="card" role="region" aria-label="Previous attempts" style={{ padding: '1rem', marginTop: '1rem' }}>
         <h2 style={{ marginTop: 0, fontSize: '1rem' }}>Attempts</h2>
         {entries.length === 0 ? (
-          <p style={{ color: 'var(--muted)' }}>No attempts yet.</p>
+          <p className="empty-state">No attempts yet.</p>
         ) : (
           <ul style={{ marginTop: '.5rem' }}>
             {entries.map(e => (

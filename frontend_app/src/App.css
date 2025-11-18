@@ -1,4 +1,6 @@
 :root {
+  /* Reuse tokens from theme.css; kept here if imported first */
+  --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
@@ -44,12 +46,12 @@ ul {
 }
 
 .app-content {
-  padding: 1rem;
+  padding: var(--space-4, 1rem);
 }
 
 @media (min-width: 960px) {
   .app-content {
-    padding: 1.5rem;
+    padding: var(--space-6, 1.5rem);
   }
 }
 
@@ -59,8 +61,20 @@ ul {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
+  overflow: hidden;
 }
 
+.card > header:first-child {
+  padding-bottom: var(--space-2, .5rem);
+  border-bottom: 1px solid rgba(17,24,39,0.05);
+}
+
+.card .card-footer {
+  padding-top: var(--space-2, .5rem);
+  border-top: 1px solid rgba(17,24,39,0.05);
+}
+
+/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -80,10 +94,44 @@ ul {
   opacity: .95;
 }
 
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.35);
+}
+
+.btn[aria-pressed="true"] {
+  background: var(--primary-600, #2563EB);
+}
+
+/* Secondary and subtle buttons (for future use) */
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-secondary:hover {
+  background: var(--surface-2);
+}
+
+/* Accessibility helper */
 .visually-hidden {
   position: absolute !important;
   height: 1px; width: 1px;
   overflow: hidden;
   clip: rect(1px, 1px, 1px, 1px);
   white-space: nowrap;
+}
+
+/* Empty state helper */
+.empty-state {
+  padding: var(--space-4, 1rem);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Grid helpers for page sections */
+.grid-autofit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4, 1rem);
 }

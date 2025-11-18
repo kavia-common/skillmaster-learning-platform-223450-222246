@@ -22,12 +22,8 @@ export default function Dashboard() {
       <div
         role="region"
         aria-label="Quick Actions"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1rem'
-        }}
+        className="grid-autofit"
+        style={{ marginBottom: '1rem' }}
       >
         <div className="card" style={{ padding: '1rem' }}>
           <h2 style={{ marginTop: 0, fontSize: '1rem' }}>Continue Learning</h2>
@@ -62,8 +58,8 @@ export default function Dashboard() {
 
       <div className="card" role="region" aria-label="Upcoming lessons" style={{ padding: '1rem' }}>
         <h2 style={{ marginTop: 0, fontSize: '1rem' }}>Upcoming</h2>
-        <p style={{ marginTop: '.5rem', color: 'var(--muted)' }}>
-          Your next lessons will appear here. (Placeholder)
+        <p className="empty-state" style={{ marginTop: '.5rem' }}>
+          Your next lessons will appear here.
         </p>
       </div>
     </section>

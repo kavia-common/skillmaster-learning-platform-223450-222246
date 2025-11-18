@@ -71,12 +71,8 @@ export default function Progress() {
           <div
             role="region"
             aria-label="Key stats"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '1rem',
-              marginBottom: '1rem'
-            }}
+            className="grid-autofit"
+            style={{ marginBottom: '1rem' }}
           >
             <div className="card" style={{ padding: '1rem' }}>
               <h2 style={{ marginTop: 0, fontSize: '1rem' }}>Total Skills</h2>
@@ -98,7 +94,7 @@ export default function Progress() {
           <div className="card" role="region" aria-label="Recent activity" style={{ padding: '1rem', minHeight: 120 }}>
             <h2 style={{ marginTop: 0, fontSize: '1rem' }}>Recent Activity</h2>
             {entries.length === 0 ? (
-              <p style={{ color: 'var(--muted)' }}>No activity yet.</p>
+              <p className="empty-state">No activity yet.</p>
             ) : (
               <ul style={{ marginTop: '.5rem' }}>
                 {entries.slice(0, 10).map((e) => (

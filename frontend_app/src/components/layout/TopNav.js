@@ -44,13 +44,12 @@ export default function TopNav() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
           <button
-            className="btn"
+            className="btn btn-secondary"
             type="button"
             aria-label="Toggle theme"
             title="Theme (coming soon)"
             style={{
-              background: 'var(--primary)',
-              borderColor: 'rgba(0,0,0,0.05)',
+              borderColor: 'var(--border)',
             }}
             onClick={() => {
               // Placeholder: Implement theme switching by toggling data-theme
