@@ -113,7 +113,7 @@ export default function LessonsList() {
                   Check module ID <code>{String(moduleId)}</code> exists and backend seed was run.
                 </p>
                 <p style={{ margin: ".25rem 0 0" }}>
-                  See <a href="/__backend_help">Backend Help</a> for diagnostics and seeding commands.
+                  See <a href="http://localhost:3001/__backend_help" target="_blank" rel="noreferrer">Backend Help</a> for diagnostics and seeding commands.
                 </p>
               </div>
             )}

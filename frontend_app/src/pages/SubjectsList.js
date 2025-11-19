@@ -120,7 +120,7 @@ export default function SubjectsList() {
                   <code style={{ marginLeft: 6 }}>PYTHONPATH=backend python3 -m src.seeds.run_all_seeds</code>
                 </p>
                 <p style={{ margin: ".25rem 0 0" }}>
-                  See <a href="/__backend_help">Backend Help</a> for route checks and CORS tips.
+                  See <a href="http://localhost:3001/__backend_help" target="_blank" rel="noreferrer">Backend Help</a> for route checks and CORS tips.
                 </p>
               </div>
             )}

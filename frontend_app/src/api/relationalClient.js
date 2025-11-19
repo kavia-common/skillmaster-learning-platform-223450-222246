@@ -1,10 +1,10 @@
 import config from "../config/env";
 
-//
-// PUBLIC_INTERFACE
-// relationalClient.js - API helpers for Subjects → Modules → Lessons → Activities/Quizzes
-// Uses env-based base URL from centralized config (REACT_APP_API_BASE or REACT_APP_BACKEND_URL).
-//
+/**
+ * PUBLIC_INTERFACE
+ * relationalClient.js - API helpers for Subjects → Modules → Lessons → Activities/Quizzes
+ * Uses env-based base URL from centralized config (REACT_APP_API_BASE or REACT_APP_BACKEND_URL).
+ */
 const BASE_URL = config.apiBaseUrl; // Expect backend CORS to allow http://localhost:3000 with credentials
 
 async function handleResponse(res) {
@@ -28,38 +28,39 @@ async function handleResponse(res) {
   return { status: res.status, ok: true, data, headers: res.headers };
 }
 
-// PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * listSubjects - List subjects with pagination and optional search.
+ * @param {{search?:string,page?:number,page_size?:number}} params
+ */
 export async function listSubjects({ search, page = 1, page_size = 20 } = {}) {
-  /**
-   * List subjects with pagination and optional search.
-   * @param {{search?:string,page?:number,page_size?:number}} params
-   */
   const qs = new URLSearchParams();
   if (search) qs.set("search", search);
   if (page) qs.set("page", String(page));
   if (page_size) qs.set("page_size", String(page_size));
   const url = `${BASE_URL}/subjects${qs.toString() ? `?${qs.toString()}` : ""}`;
-  const res = await fetch(url, { method: "GET", headers: { Accept: "application/json" }, credentials: "include" });
-  const parsed = await handleResponse(res);
+  const parsed = await handleResponse(
+    await fetch(url, { method: "GET", headers: { Accept: "application/json" }, credentials: "include" })
+  );
   // Normalize common shapes to { items, total }
   const d = parsed.data;
   if (Array.isArray(d)) {
     return { ...parsed, data: { items: d, total: d.length } };
   }
-  if (d && typeof d === "object" && !Array.isArray(d.items)) {
-    // Some backends return plain list under another key; pass through as-is
-    return parsed;
+  if (d && typeof d === "object") {
+    if (Array.isArray(d.items)) return { ...parsed, data: { items: d.items, total: d.total ?? d.items.length } };
+    if (Array.isArray(d.results)) return { ...parsed, data: { items: d.results, total: d.total ?? d.results.length } };
   }
   return parsed;
 }
 
-// PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * getSubject - Get a subject by id. include_nested to retrieve modules tree.
+ * @param {number|string} subjectId
+ * @param {{include_nested?:boolean}} options
+ */
 export async function getSubject(subjectId, { include_nested = false } = {}) {
-  /**
-   * Get a subject by id. include_nested to retrieve modules tree.
-   * @param {number|string} subjectId
-   * @param {{include_nested?:boolean}} options
-   */
   const qs = new URLSearchParams();
   if (include_nested) qs.set("include_nested", "true");
   const url = `${BASE_URL}/subjects/${encodeURIComponent(subjectId)}${qs.toString() ? `?${qs.toString()}` : ""}`;
@@ -68,42 +69,60 @@ export async function getSubject(subjectId, { include_nested = false } = {}) {
   );
 }
 
-// PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * listModulesBySubject - List modules for a subject with pagination/search.
+ */
 export async function listModulesBySubject(subjectId, { search, page = 1, page_size = 20 } = {}) {
-  /**
-   * List modules for a subject with pagination/search.
-   */
   const qs = new URLSearchParams();
   if (search) qs.set("search", search);
   if (page) qs.set("page", String(page));
   if (page_size) qs.set("page_size", String(page_size));
   const url = `${BASE_URL}/subjects/${encodeURIComponent(subjectId)}/modules${qs.toString() ? `?${qs.toString()}` : ""}`;
-  return handleResponse(
+  const parsed = await handleResponse(
     await fetch(url, { method: "GET", headers: { Accept: "application/json" }, credentials: "include" })
   );
+  const d = parsed.data;
+  if (Array.isArray(d)) {
+    return { ...parsed, data: { items: d, total: d.length } };
+  }
+  if (d && typeof d === "object") {
+    if (Array.isArray(d.items)) return { ...parsed, data: { items: d.items, total: d.total ?? d.items.length } };
+    if (Array.isArray(d.results)) return { ...parsed, data: { items: d.results, total: d.total ?? d.results.length } };
+  }
+  return parsed;
 }
 
-// PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * listModules - List modules with optional subject_id filter.
+ */
 export async function listModules({ subject_id, search, page = 1, page_size = 20 } = {}) {
-  /**
-   * List modules with optional subject_id filter.
-   */
   const qs = new URLSearchParams();
   if (subject_id != null && subject_id !== "") qs.set("subject_id", String(subject_id));
   if (search) qs.set("search", search);
   if (page) qs.set("page", String(page));
   if (page_size) qs.set("page_size", String(page_size));
   const url = `${BASE_URL}/modules${qs.toString() ? `?${qs.toString()}` : ""}`;
-  return handleResponse(
+  const parsed = await handleResponse(
     await fetch(url, { method: "GET", headers: { Accept: "application/json" }, credentials: "include" })
   );
+  const d = parsed.data;
+  if (Array.isArray(d)) {
+    return { ...parsed, data: { items: d, total: d.length } };
+  }
+  if (d && typeof d === "object") {
+    if (Array.isArray(d.items)) return { ...parsed, data: { items: d.items, total: d.total ?? d.items.length } };
+    if (Array.isArray(d.results)) return { ...parsed, data: { items: d.results, total: d.total ?? d.results.length } };
+  }
+  return parsed;
 }
 
-// PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * getModule - Get a module by id. include_nested=true to include lessons.
+ */
 export async function getModule(moduleId, { include_nested = false } = {}) {
-  /**
-   * Get a module by id. include_nested=true to include lessons.
-   */
   const qs = new URLSearchParams();
   if (include_nested) qs.set("include_nested", "true");
   const url = `${BASE_URL}/modules/${encodeURIComponent(moduleId)}${qs.toString() ? `?${qs.toString()}` : ""}`;
@@ -112,26 +131,35 @@ export async function getModule(moduleId, { include_nested = false } = {}) {
   );
 }
 
-// PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * listLessonsByModule - List lessons for a module with pagination/search.
+ */
 export async function listLessonsByModule(moduleId, { search, page = 1, page_size = 20 } = {}) {
-  /**
-   * List lessons for a module with pagination/search.
-   */
   const qs = new URLSearchParams();
   if (search) qs.set("search", search);
   if (page) qs.set("page", String(page));
   if (page_size) qs.set("page_size", String(page_size));
   const url = `${BASE_URL}/modules/${encodeURIComponent(moduleId)}/lessons${qs.toString() ? `?${qs.toString()}` : ""}`;
-  return handleResponse(
+  const parsed = await handleResponse(
     await fetch(url, { method: "GET", headers: { Accept: "application/json" }, credentials: "include" })
   );
+  const d = parsed.data;
+  if (Array.isArray(d)) {
+    return { ...parsed, data: { items: d, total: d.length } };
+  }
+  if (d && typeof d === "object") {
+    if (Array.isArray(d.items)) return { ...parsed, data: { items: d.items, total: d.total ?? d.items.length } };
+    if (Array.isArray(d.results)) return { ...parsed, data: { items: d.results, total: d.total ?? d.results.length } };
+  }
+  return parsed;
 }
 
- // PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * getLesson - Get lesson by id; include_nested=true to include activities.
+ */
 export async function getLesson(lessonId, { include_nested = false } = {}) {
-  /**
-   * Get lesson by id; include_nested=true to include activities.
-   */
   const qs = new URLSearchParams();
   if (include_nested) qs.set("include_nested", "true");
   const url = `${BASE_URL}/lessons/${encodeURIComponent(lessonId)}${qs.toString() ? `?${qs.toString()}` : ""}`;
@@ -150,39 +178,8 @@ export async function listActivitiesByLesson(lessonId, { page = 1, page_size = 2
   const qs = new URLSearchParams();
   if (page) qs.set("page", String(page));
   if (page_size) qs.set("page_size", String(page_size));
-  const url = `${BASE_URL}/lessons/${encodeURIComponent(LessonIdToNumber(lessonId))}/activities${
->>>>>>> REPLACE   
-`````
-
-Explanation: Add a defensive normalization for subjects/modules list shape to array to avoid empty renders if backend returns {items,total}.
-
-````edit file="skillmaster-learning-platform-223450-222246/frontend_app/src/api/relationalClient.js"      
-<<<<<<< SEARCH
-  const parsed = await handleResponse(res);
-  // Normalize common shapes to { items, total }
-  const d = parsed.data;
-  if (Array.isArray(d)) {
-    return { ...parsed, data: { items: d, total: d.length } };
-  }
-  if (d && typeof d === "object" && !Array.isArray(d.items)) {
-    // Some backends return plain list under another key; pass through as-is
-    return parsed;
-  }
-  return parsed;
-=======
-  const parsed = await handleResponse(res);
-  // Normalize common shapes to { items, total }
-  const d = parsed.data;
-  if (Array.isArray(d)) {
-    return { ...parsed, data: { items: d, total: d.length } };
-  }
-  if (d && typeof d === "object") {
-    if (Array.isArray(d.items)) return { ...parsed, data: { items: d.items, total: d.total ?? d.items.length } };
-    if (Array.isArray(d.results)) return { ...parsed, data: { items: d.results, total: d.total ?? d.results.length } };
-  }
-  return parsed;
-    qs.toString() ? `?${qs.toString()}` : ""
-  }`;
+  const numericLessonId = LessonIdToNumber(lessonId);
+  const url = `${BASE_URL}/lessons/${encodeURIComponent(numericLessonId)}/activities${qs.toString() ? `?${qs.toString()}` : ""}`;
   return handleResponse(
     await fetch(url, { method: "GET", headers: { Accept: "application/json" }, credentials: "include" })
   );

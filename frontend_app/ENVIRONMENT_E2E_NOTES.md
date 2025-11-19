@@ -1,61 +1,33 @@
-# Frontend ↔ Backend E2E Notes
+# End-to-End Verification Notes
 
-This document summarizes how to run and verify the end-to-end experience locally.
+1) Backend up:
+- Start FastAPI at http://localhost:3001 (uvicorn src.api.main:app --port 3001 --reload)
+- CORS should include http://localhost:3000 with allow_credentials=true (already configured in src/api/main.py)
 
-## Backend (FastAPI)
+2) Seed relational/content data:
+- From backend repo root:
+  PYTHONPATH=backend python3 -m src.seeds.run_all_seeds
+- Or hit the helper endpoint in a browser:
+  http://localhost:3001/__run_seeds
 
-- Base URL (default): http://localhost:3001
-- CORS: Configured to allow http://localhost:3000 with credentials.
-- OpenAPI: http://localhost:3001/docs
+3) Manual endpoint checks (expect HTTP 200):
+- http://localhost:3001/skills
+- http://localhost:3001/content/skills
+- http://localhost:3001/subjects
+- http://localhost:3001/subjects/1/modules
+- http://localhost:3001/modules/1/lessons
 
-Seeding data:
-- The backend initializes tables on startup.
-- To seed relational/content data explicitly, run from the project root:
-  - Using env var on startup (recommended when starting FastAPI):
-    - Set SEED_RELATIONAL_DATA=true in the backend environment before launching the server
-  - Using the CLI (ensure Python path includes `backend`):
-    - From skillmaster-learning-platform-223450-222247/
-      - `PYTHONPATH=backend python3 -m src.seeds.run_all_seeds`
-    - This will print counts for subjects, skills, modules, lessons, activities, and quizzes.
-- Quick verification after seeding:
-  - curl -i http://localhost:3001/subjects
-  - curl -i http://localhost:3001/modules
-  - curl -i http://localhost:3001/skills
-  - curl -i "http://localhost:3001/modules/1/lessons?page=1&page_size=5"
+4) Frontend env:
+- Copy .env.example to .env
+- Ensure REACT_APP_API_BASE=http://localhost:3001
 
-## Frontend (React)
+5) Frontend run:
+- npm start (http://localhost:3000)
+- Visit:
+  - /skills
+  - /subjects
+  - /subjects/:id/modules
+  - /modules/:id/lessons
+  - /lessons/:id and /learn/:id
 
-- Base URL Discovery:
-  - `REACT_APP_API_BASE` or `REACT_APP_BACKEND_URL`, defaults to http://localhost:3001
-- Frontend dev server: http://localhost:3000
-
-Core endpoints consumed:
-- Catalog (Mongo-backed):
-  - GET /content/skills (fallback to GET /skills)
-  - GET /content/skills/{slug}
-  - GET /content/skills/{slug}/lessons
-  - GET /content/lessons/{id}
-- Relational:
-  - GET /subjects, /subjects/{id}, /subjects/{id}/modules
-  - GET /modules, /modules/{id}, /modules/{id}/lessons
-  - GET /lessons/{id}
-- Progress:
-  - GET /progress/{user_id}
-  - GET /progress/{user_id}/lesson/{lesson_id}
-  - POST /progress/complete
-
-Pages:
-- /skills -> Skills list (SkillsList)
-- /skills/:skillId -> Skill detail (legacy, ID-based)
-- /lessons/:id -> Lesson detail (catalog variant)
-- /rel/lessons/:lessonId -> Lesson detail (relational variant)
-- /subjects -> Subjects list
-- /subjects/:subjectId/modules -> Modules list
-- /modules/:moduleId/lessons -> Lessons list
-- /learn/:lessonId -> Legacy player (uses /progress endpoints)
-
-Fallback UX:
-- All pages include graceful error and empty-state rendering. If a 404 is returned or an API call fails, the page shows a friendly alert and continues rendering where possible.
-
-Tip:
-- Ensure the backend is reachable and seeded for a rich demo experience, otherwise the frontend will render empty states.
+If you see empty listings, confirm seeds ran and check Backend Help at /__backend_help.
