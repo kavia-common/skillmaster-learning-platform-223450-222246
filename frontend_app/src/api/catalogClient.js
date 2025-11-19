@@ -1,163 +1,111 @@
 import config from "../config/env";
 
-//
-// PUBLIC_INTERFACE
-// catalogClient.js - Thin API layer for catalog endpoints (skills, lessons)
-// Aligned with FastAPI routes: /content/skills, /content/skills/{slug}, /content/skills/{slug}/lessons,
-// with graceful fallbacks to /skills and related endpoints.
-//
-const BASE_URL = config.apiBaseUrl; // Ensure FastAPI CORS allows http://localhost:3000 with credentials: true
+/**
+ * PUBLIC_INTERFACE
+ * Catalog API Client
+ *
+ * Resolves endpoints across both content (/content/*) and relational APIs to maximize compatibility.
+ * Includes robust normalization for {items, results, data, array} payload shapes.
+ */
+const API_BASE = config.apiBaseUrl;
 
-async function handleResponse(res) {
-  const text = await res.text();
-  let data = null;
-  if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = text;
-    }
-  }
-  if (!res.ok) {
-    const message =
-      (data && (data.message || data.error || data.detail)) ||
-      `Request failed with status ${res.status}`;
-    const err = new Error(message);
-    err.status = res.status;
-    err.data = data;
-    throw err;
-  }
-  return { status: res.status, ok: true, data, headers: res.headers };
+/** Normalize list responses to an array. */
+function toArrayPayload(data) {
+  if (Array.isArray(data)) return data;
+  if (!data || typeof data !== 'object') return [];
+  if (Array.isArray(data.items)) return data.items;
+  if (Array.isArray(data.results)) return data.results;
+  if (Array.isArray(data.data)) return data.data;
+  return [];
 }
 
-function toPageParams(limit = 12, offset = 0) {
+// PUBLIC_INTERFACE
+export async function fetchSkills({ subject_slug, level, category, limit = 12, offset = 0 } = {}) {
+  /**
+   * Fetch skills: prefer relational /skills, fallback to /content/skills listing.
+   * Accepts filters for subject_slug/level (relational) and category/difficulty (content).
+   */
   const pageSize = Math.max(1, Number(limit) || 12);
   const page = Math.max(1, Math.floor((Number(offset) || 0) / pageSize) + 1);
-  return { page, page_size: pageSize };
+
+  // Try relational first to better support progressive skills
+  try {
+    const qsObj = Object.fromEntries(
+      Object.entries({ subject_slug, level }).filter(([_, v]) => v != null && v !== '')
+    );
+    const qs = new URLSearchParams(qsObj).toString();
+    const res = await fetch(`${API_BASE}/skills${qs ? `?${qs}` : ''}`, { credentials: 'include', headers: { Accept: 'application/json' }});
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : toArrayPayload(data);
+    }
+  } catch (_) { /* ignore */ }
+
+  // Fallback to content skills with pagination
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  if (level) params.set('difficulty', level);
+  params.set('page', String(page));
+  params.set('page_size', String(pageSize));
+  const res2 = await fetch(`${API_BASE}/content/skills${params.toString() ? `?${params}` : ''}`, { credentials: 'include', headers: { Accept: 'application/json' }});
+  if (!res2.ok) throw new Error('Failed to fetch skills from both endpoints');
+  const data2 = await res2.json();
+  return toArrayPayload(data2);
 }
 
 // PUBLIC_INTERFACE
-export async function fetchSkills({ category, limit = 12, offset = 0 } = {}) {
-  /**
-   * Retrieve paginated skills, optionally filtered by category.
-   * Maps to GET /content/skills with page/page_size, falling back to /skills (array) if needed.
-   */
-  const { page, page_size } = toPageParams(limit, offset);
-  const qs = new URLSearchParams();
-  if (category) qs.set("category", category);
-  qs.set("page", String(page));
-  qs.set("page_size", String(page_size));
-
-  // Prefer content library (supports pagination and filters)
-  const url = `${BASE_URL}/content/skills${qs.toString() ? `?${qs.toString()}` : ""}`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-    credentials: "include",
-  });
-
-  if (res.ok) return handleResponse(res);
-
-  // Fallback: legacy /skills (returns array)
-  const fallback = await fetch(`${BASE_URL}/skills`, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-    credentials: "include",
-  });
-  return handleResponse(fallback);
+export async function fetchSubjects(params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(`${API_BASE}/subjects${qs ? `?${qs}` : ''}`, { credentials: 'include', headers: { Accept: 'application/json' }});
+  if (!res.ok) throw new Error('Failed to fetch subjects');
+  const data = await res.json();
+  return toArrayPayload(data);
 }
 
 // PUBLIC_INTERFACE
-export async function fetchSkillBySlug(slug) {
+export async function fetchSubjectModules(subjectId, params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(`${API_BASE}/subjects/${subjectId}/modules${qs ? `?${qs}` : ''}`, { credentials: 'include', headers: { Accept: 'application/json' }});
+  if (!res.ok) throw new Error('Failed to fetch modules');
+  const data = await res.json();
+  return toArrayPayload(data);
+}
+
+// PUBLIC_INTERFACE
+export async function fetchModuleLessons(moduleId, params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(`${API_BASE}/modules/${moduleId}/lessons${qs ? `?${qs}` : ''}`, { credentials: 'include', headers: { Accept: 'application/json' }});
+  if (!res.ok) throw new Error('Failed to fetch lessons');
+  const data = await res.json();
+  if (Array.isArray(data.items)) return data.items;
+  if (Array.isArray(data.results)) return data.results;
+  if (Array.isArray(data.data)) return data.data;
+  if (Array.isArray(data)) return data;
+  return [];
+}
+
+// PUBLIC_INTERFACE
+export async function fetchLessonDetail(lessonIdentifier, preferRelational = true) {
   /**
-   * Retrieve a single skill by slug, preferring /content/skills/{slug}.
-   * Fallbacks: /skills/{id} or searching /skills array by slug/name.
+   * Retrieve lesson detail. If preferRelational, treat identifier as numeric id.
+   * Fallback to content lesson by slug.
    */
-  const primary = `${BASE_URL}/content/skills/${encodeURIComponent(slug)}`;
-  const res = await fetch(primary, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-    credentials: "include",
-  });
-  if (res.ok) return handleResponse(res);
-
-  // Fallback by ID path (numeric/integer ids likely for relational /skills/{skill_id})
-  const byId = await fetch(`${BASE_URL}/skills/${encodeURIComponent(slug)}`, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-    credentials: "include",
-  });
-  if (byId.ok) return handleResponse(byId);
-
-  // Fallback: search in /skills list
-  const list = await fetch(`${BASE_URL}/skills`, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-    credentials: "include",
-  }).then(handleResponse);
-
-  const found =
-    Array.isArray(list.data) &&
-    list.data.find((s) => s.slug === slug || String(s.id) === String(slug) || s.name === slug);
-  if (!found) {
-    const e = new Error("Skill not found");
-    e.status = 404;
-    throw e;
+  if (preferRelational && /^\d+$/.test(String(lessonIdentifier))) {
+    const res = await fetch(`${API_BASE}/lessons/${lessonIdentifier}?include_nested=true`, { credentials: 'include', headers: { Accept: 'application/json' }});
+    if (res.ok) return await res.json();
   }
-  return { status: 200, ok: true, data: found };
+  const res2 = await fetch(`${API_BASE}/content/lessons/${lessonIdentifier}`, { credentials: 'include', headers: { Accept: 'application/json' }});
+  if (!res2.ok) throw new Error('Failed to fetch lesson detail');
+  return await res2.json();
 }
 
-// PUBLIC_INTERFACE
-export async function fetchLessonsBySkillSlug(slug) {
-  /**
-   * Retrieve lessons for a given skill slug via /content/skills/{slug}/lessons.
-   */
-  const url = `${BASE_URL}/content/skills/${encodeURIComponent(slug)}/lessons`;
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-    credentials: "include",
-  });
-  return handleResponse(res);
-}
-
-// PUBLIC_INTERFACE
-export async function fetchLessonById(id, { skillSlug } = {}) {
-  /**
-   * Retrieve a single lesson by id or slug.
-   * Tries /content/lessons/{id}, fallback to searching lessons under provided skillSlug.
-   */
-  const direct = await fetch(`${BASE_URL}/content/lessons/${encodeURIComponent(id)}`, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-    credentials: "include",
-  });
-  if (direct.ok) return handleResponse(direct);
-
-  if (!skillSlug) {
-    const e = new Error("Lesson not found (provide skillSlug for fallback search)");
-    e.status = direct.status || 404;
-    throw e;
-  }
-
-  const lessons = await fetchLessonsBySkillSlug(skillSlug);
-  const lesson =
-    Array.isArray(lessons.data) &&
-    lessons.data.find((l) => String(l.id) === String(id) || String(l.slug) === String(id));
-  if (!lesson) {
-    const e = new Error("Lesson not found");
-    e.status = 404;
-    throw e;
-  }
-  return { status: 200, ok: true, data: lesson };
-}
-
-export const baseUrl = BASE_URL;
+export const baseUrl = API_BASE;
 
 export default {
-  baseUrl: BASE_URL,
+  baseUrl: API_BASE,
   fetchSkills,
-  fetchSkillBySlug,
-  fetchLessonsBySkillSlug,
-  fetchLessonById,
+  fetchSubjects,
+  fetchSubjectModules,
+  fetchModuleLessons,
+  fetchLessonDetail,
 };

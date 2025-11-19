@@ -78,16 +78,16 @@ export default function ModulesList() {
       ) : (
         <>
           <div role="list" aria-label="Module list" className="grid-autofit">
-            {modules.map((m) => (
+            {modules.map((m, idx) => (
               <EntityCard
-                key={m.id}
+                key={m.id ?? m.slug ?? idx}
                 title={m.title || m.slug || m.id}
                 description={m.description || ""}
                 meta={<ProgressBar value={Math.min(100, (m.order_index ?? 0) * 10)} label="Progress" />}
                 actions={
                   <Link
                     className="btn"
-                    to={`/modules/${encodeURIComponent(m.id)}/lessons`}
+                    to={`/modules/${encodeURIComponent(m.id ?? m.slug ?? idx)}/lessons`}
                     aria-label={`View lessons for ${m.title || m.id}`}
                   >
                     View Lessons

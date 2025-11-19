@@ -78,9 +78,9 @@ export default function LessonsList() {
       ) : (
         <>
           <div role="list" aria-label="Lesson list" className="grid-autofit">
-            {lessons.map((lsn) => (
+            {lessons.map((lsn, idx) => (
               <EntityCard
-                key={lsn.id}
+                key={lsn.id ?? lsn.slug ?? idx}
                 title={lsn.title || lsn.slug || lsn.id}
                 description={lsn.content ? `${String(lsn.content).slice(0, 120)}…` : ""}
                 meta={<ProgressBar value={Math.min(100, (lsn.order_index ?? 0) * 10)} label="Progress" />}
@@ -88,7 +88,7 @@ export default function LessonsList() {
                   <>
                     <Link
                       className="btn"
-                      to={`/lessons/${encodeURIComponent(lsn.id)}`}
+                      to={`/lessons/${encodeURIComponent(lsn.id ?? lsn.slug ?? idx)}`}
                       aria-label={`Open lesson ${lsn.title || lsn.id}`}
                       state={{ moduleId, lessonTitle: lsn.title }}
                     >
@@ -96,7 +96,7 @@ export default function LessonsList() {
                     </Link>
                     <Link
                       className="btn btn-secondary"
-                      to={`/learn/${encodeURIComponent(lsn.id)}`}
+                      to={`/learn/${encodeURIComponent(lsn.id ?? lsn.slug ?? idx)}`}
                       aria-label={`Open interactive player for ${lsn.title || lsn.id}`}
                       state={{ moduleId, lessonTitle: lsn.title }}
                     >

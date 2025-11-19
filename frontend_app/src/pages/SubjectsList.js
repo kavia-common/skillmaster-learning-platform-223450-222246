@@ -99,14 +99,14 @@ export default function SubjectsList() {
       ) : (
         <>
           <div role="list" aria-label="Subject list" className="grid-autofit">
-            {items.map((s) => (
+            {items.map((s, idx) => (
               <EntityCard
-                key={s.id}
+                key={s.id ?? s.slug ?? idx}
                 title={s.title || s.slug || s.id}
                 description={s.description || ""}
                 meta={<ProgressBar value={placeholderProgress} label="Progress" />}
                 actions={
-                  <Link className="btn" to={`/subjects/${encodeURIComponent(s.id)}/modules`} aria-label={`View modules for ${s.title || s.id}`}>
+                  <Link className="btn" to={`/subjects/${encodeURIComponent(s.id ?? s.slug ?? idx)}/modules`} aria-label={`View modules for ${s.title || s.id}`}>
                     View Modules
                   </Link>
                 }

@@ -7,7 +7,7 @@ import { fetchSkills as fetchCatalogSkills } from '../api/catalogClient';
 /**
  * PUBLIC_INTERFACE
  * SkillsCatalog - Lists available micro-skills with simple search/filter placeholders.
- * Uses corrected endpoints via catalogClient: /content/skills (fallback /skills).
+ * Uses corrected endpoints via catalogClient: /skills (preferred) with fallback /content/skills.
  */
 export default function SkillsCatalog() {
   const { state, actions } = useAppState();
@@ -35,15 +35,8 @@ export default function SkillsCatalog() {
     actions.clearError();
 
     fetchCatalogSkills({ limit: 24, offset: 0 })
-      .then((res) => {
+      .then((items) => {
         if (!isMounted) return;
-        // Accept either {items:[]}, [] or unexpected shapes; coerce to safe array
-        const data = res?.data;
-        const items = Array.isArray(data?.items)
-          ? data.items
-          : Array.isArray(data)
-          ? data
-          : (data && typeof data === "object" && Array.isArray(data.results) ? data.results : []);
         setSkills(Array.isArray(items) ? items.filter(Boolean) : []);
       })
       .catch((err) => {
@@ -65,7 +58,7 @@ export default function SkillsCatalog() {
       <header style={{ marginBottom: '1rem' }}>
         <h1 style={{ marginTop: 0 }}>Skills</h1>
         <p style={{ color: 'var(--muted)' }}>
-          Browse available micro-skills. Use search and filters to find skills quickly.
+          Browse available micro-skills. Use search to find skills quickly.
         </p>
       </header>
 
@@ -114,8 +107,8 @@ export default function SkillsCatalog() {
         <LoadingSpinner label="Loading skills" />
       ) : (
         <div role="list" aria-label="Skill list" className="grid-autofit">
-          {(filtered || []).map((s) => {
-            const idOrSlug = s?.id ?? s?.slug ?? s?.name ?? '';
+          {(filtered || []).map((s, idx) => {
+            const idOrSlug = s?.id ?? s?.slug ?? s?.name ?? idx;
             const name = s?.name || s?.title || idOrSlug;
             const desc = s?.description || 'No description';
             return (
@@ -135,7 +128,7 @@ export default function SkillsCatalog() {
           {!filtered?.length && !state.ui.error && (
             <div className="card" style={{ padding: '1rem' }}>
               <p className="empty-state" style={{ margin: 0 }}>
-                No skills found. Try clearing filters or adjusting your search.
+                No skills found. Try clearing search.
               </p>
               <p style={{ margin: '.5rem 0 0', color: 'var(--muted)' }}>
                 If this is a fresh setup, seed the backend: <code>PYTHONPATH=backend python3 -m src.seeds.run_all_seeds</code>.

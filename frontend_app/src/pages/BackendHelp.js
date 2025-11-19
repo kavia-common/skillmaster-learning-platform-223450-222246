@@ -52,8 +52,7 @@ PYTHONPATH=backend python3 -m src.seeds.run_all_seeds`}</pre>
           Tip: If running the backend with env vars, you can also set <code>SEED_RELATIONAL_DATA=true</code> before startup.
         </li>
         <li>
-          See also: <a href="https://github.com/kavia/checklists#backend" target="_blank" rel="noreferrer">Backend checklist</a> or open the local project doc
-          <code>src/pages/BackendChecklist.md</code>.
+          See also: local project doc at <code>frontend_app/src/pages/BackendChecklist.md</code>.
         </li>
       </ol>
       <div className="card" role="region" aria-label="Quick links" style={{ padding: "1rem" }}>
