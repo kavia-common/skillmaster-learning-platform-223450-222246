@@ -94,6 +94,9 @@ export default function LessonDetailNew() {
       {err && (
         <div role="alert" className="card" style={{ padding: ".75rem", borderColor: "var(--error)" }}>
           <strong style={{ color: "var(--error)" }}>Error:</strong> <span>{String(err)}</span>
+          <div style={{ marginTop: ".5rem", color: "var(--muted)" }}>
+            If this lesson does not exist yet, seed the backend and try again. See <a href="/__backend_help">Backend Help</a>.
+          </div>
         </div>
       )}
 

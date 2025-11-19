@@ -137,6 +137,12 @@ export default function SkillsCatalog() {
               <p className="empty-state" style={{ margin: 0 }}>
                 No skills found. Try clearing filters or adjusting your search.
               </p>
+              <p style={{ margin: '.5rem 0 0', color: 'var(--muted)' }}>
+                If this is a fresh setup, seed the backend: <code>PYTHONPATH=backend python3 -m src.seeds.run_all_seeds</code>.
+              </p>
+              <p style={{ margin: '.25rem 0 0' }}>
+                Need help? Visit <a href="/__backend_help">Backend Help</a>.
+              </p>
             </div>
           )}
         </div>

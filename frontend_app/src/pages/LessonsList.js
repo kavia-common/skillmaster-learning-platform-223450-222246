@@ -105,6 +105,12 @@ export default function LessonsList() {
             {!lessons.length && !err && (
               <div className="card" style={{ padding: "1rem" }}>
                 <p className="empty-state" style={{ margin: 0 }}>No lessons found.</p>
+                <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
+                  Check module ID <code>{String(moduleId)}</code> exists and backend seed was run.
+                </p>
+                <p style={{ margin: ".25rem 0 0" }}>
+                  See <a href="/__backend_help">Backend Help</a> for diagnostics and seeding commands.
+                </p>
               </div>
             )}
           </div>

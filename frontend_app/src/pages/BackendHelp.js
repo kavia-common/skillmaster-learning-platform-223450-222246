@@ -24,21 +24,43 @@ export default function BackendHelp() {
         </p>
       </header>
       <ol>
-        <li>Ensure the backend is running at the base URL above (OpenAPI should load at <a href={`${base}/docs`} target="_blank" rel="noreferrer">{base}/docs</a>).</li>
-        <li>Confirm CORS allows http://localhost:3000 with credentials (backend should set allow_credentials=true and include origin).</li>
-        <li>Seed data:
-          <pre style={{ whiteSpace: "pre-wrap", background: "var(--surface-2)", padding: ".75rem", borderRadius: 8 }}>
-            {`cd skillmaster-learning-platform-223450-222247
-PYTHONPATH=backend python3 -m src.seeds.run_all_seeds`}
-          </pre>
+        <li>
+          Ensure the backend is running at the base URL above (OpenAPI should load at{" "}
+          <a href={`${base}/docs`} target="_blank" rel="noreferrer">
+            {base}/docs
+          </a>
+          ).
+        </li>
+        <li>
+          Confirm CORS allows <code>http://localhost:3000</code> with credentials. Backend must set{" "}
+          <code>allow_credentials=true</code> and include the origin in allowed origins.
+        </li>
+        <li>
+          Seed data if lists are empty:
+          <pre
+            style={{
+              whiteSpace: "pre-wrap",
+              background: "var(--surface-2)",
+              padding: ".75rem",
+              borderRadius: 8,
+            }}
+          >{`cd skillmaster-learning-platform-223450-222247
+PYTHONPATH=backend python3 -m src.seeds.run_all_seeds`}</pre>
+          Tip: If running the backend with env vars, you can also set <code>SEED_RELATIONAL_DATA=true</code> before startup.
+        </li>
+        <li>
+          See also: <a href="https://github.com/kavia/checklists#backend" target="_blank" rel="noreferrer">Backend checklist</a> or open the local project doc
+          <code>src/pages/BackendChecklist.md</code>.
         </li>
       </ol>
       <div className="card" role="region" aria-label="Quick links" style={{ padding: "1rem" }}>
         <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Quick links</h2>
         <ul>
-          {checks.map(c => (
+          {checks.map((c) => (
             <li key={c.path}>
-              <a href={`${base}${c.path}`} target="_blank" rel="noreferrer">{c.label}</a>
+              <a href={`${base}${c.path}`} target="_blank" rel="noreferrer">
+                {c.label}
+              </a>
             </li>
           ))}
         </ul>

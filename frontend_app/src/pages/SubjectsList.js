@@ -111,6 +111,13 @@ export default function SubjectsList() {
             {!items.length && !err && (
               <div className="card" style={{ padding: "1rem" }}>
                 <p className="empty-state" style={{ margin: 0 }}>No subjects found.</p>
+                <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
+                  If you just started the backend, you may need to seed data:
+                  <code style={{ marginLeft: 6 }}>PYTHONPATH=backend python3 -m src.seeds.run_all_seeds</code>
+                </p>
+                <p style={{ margin: ".25rem 0 0" }}>
+                  See <a href="/__backend_help">Backend Help</a> for route checks and CORS tips.
+                </p>
               </div>
             )}
           </div>

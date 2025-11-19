@@ -61,6 +61,9 @@ export default function Progress() {
         <div role="alert" className="card" style={{ padding: '.75rem', borderColor: 'var(--error)' }}>
           <strong style={{ color: 'var(--error)' }}>Error:</strong>{' '}
           <span>{String(state.ui.error)}</span>
+          <div style={{ marginTop: '.5rem', color: 'var(--muted)' }}>
+            Verify backend progress endpoints and CORS. See <a href="/__backend_help">Backend Help</a>.
+          </div>
         </div>
       )}
 

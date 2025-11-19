@@ -82,6 +82,9 @@ export default function Dashboard() {
       {resumeError && (
         <div role="alert" className="card" style={{ padding: '.75rem', borderColor: 'var(--error)', marginBottom: '.75rem' }}>
           <strong style={{ color: 'var(--error)' }}>Resume error:</strong> <span>{String(resumeError)}</span>
+          <div style={{ marginTop: '.5rem', color: 'var(--muted)' }}>
+            Ensure progress endpoints are reachable and data exists. See <a href="/__backend_help">Backend Help</a>.
+          </div>
         </div>
       )}
 

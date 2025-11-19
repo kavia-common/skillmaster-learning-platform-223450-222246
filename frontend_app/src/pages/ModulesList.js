@@ -94,6 +94,12 @@ export default function ModulesList() {
             {!modules.length && !err && (
               <div className="card" style={{ padding: "1rem" }}>
                 <p className="empty-state" style={{ margin: 0 }}>No modules found.</p>
+                <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
+                  Ensure the backend has seeded data and that subject ID <code>{String(subjectId)}</code> exists.
+                </p>
+                <p style={{ margin: ".25rem 0 0" }}>
+                  Quick check: <a href="/__backend_help">Backend Help</a>
+                </p>
               </div>
             )}
           </div>

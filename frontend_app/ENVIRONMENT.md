@@ -7,7 +7,8 @@ This frontend consumes the backend catalog and relational APIs.
 - REACT_APP_API_BASE: Preferred base URL of backend (FastAPI). Example: http://localhost:3001
   - Note: Frontend uses fetch with credentials: 'include'. Ensure your backend CORS allows http://localhost:3000 and allow_credentials=true.
 - REACT_APP_BACKEND_URL: Legacy/alternate base URL, used if API_BASE not set.
-  - If neither is set, the app falls back to `window.location.origin` and swaps port 3000 -> 3001 for local preview.
+  - If neither is set, the app defaults to http://localhost:3001.
+  - Tip: When running locally, keep ports aligned with CORS config: frontend 3000, backend 3001.
 
 Copy .env.example to .env and adjust as needed.
 
