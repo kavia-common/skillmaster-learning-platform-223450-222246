@@ -11,12 +11,17 @@ This document summarizes how to run and verify the end-to-end experience locally
 Seeding data:
 - The backend initializes tables on startup.
 - To seed relational/content data explicitly, run from the project root:
-  - Using env var on startup:
-    - SEED_RELATIONAL_DATA=true (set in backend env before starting)
+  - Using env var on startup (recommended when starting FastAPI):
+    - Set SEED_RELATIONAL_DATA=true in the backend environment before launching the server
   - Using the CLI (ensure Python path includes `backend`):
     - From skillmaster-learning-platform-223450-222247/
       - `PYTHONPATH=backend python3 -m src.seeds.run_all_seeds`
     - This will print counts for subjects, skills, modules, lessons, activities, and quizzes.
+- Quick verification after seeding:
+  - curl -i http://localhost:3001/subjects
+  - curl -i http://localhost:3001/modules
+  - curl -i http://localhost:3001/skills
+  - curl -i "http://localhost:3001/modules/1/lessons?page=1&page_size=5"
 
 ## Frontend (React)
 

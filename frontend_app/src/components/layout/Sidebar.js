@@ -114,6 +114,16 @@ export default function Sidebar() {
           </li>
           <li>
             <NavLink
+              to="/subjects"
+              className={linkClass}
+              style={linkStyle(collapsed)}
+            >
+              <span aria-hidden="true">📚</span>
+              {!collapsed && <span>Subjects</span>}
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
               to="/progress"
               className={linkClass}
               style={linkStyle(collapsed)}

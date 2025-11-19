@@ -12,8 +12,11 @@ export default function BackendHelp() {
     { path: "/", label: "Health (/)" },
     { path: "/skills", label: "Skills (/skills)" },
     { path: "/content/skills", label: "Catalog Skills (/content/skills)" },
+    { path: "/content/skills/test-skill", label: "Sample Skill by Slug (/content/skills/{slug})" },
     { path: "/subjects", label: "Subjects (/subjects)" },
     { path: "/modules", label: "Modules (/modules)" },
+    { path: "/subjects/1/modules", label: "Modules by Subject (/subjects/{id}/modules)" },
+    { path: "/modules/1/lessons", label: "Lessons by Module (/modules/{id}/lessons)" },
   ];
   return (
     <section className="card" style={{ padding: "1rem" }} aria-label="Backend Help">
