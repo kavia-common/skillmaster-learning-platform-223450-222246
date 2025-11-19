@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppState } from '../state/store';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { fetchSkills as fetchCatalogSkills } from '../api/catalogClient';
+import { fetchSkills as fetchCatalogSkills, runSeeds as runCatalogSeeds, baseUrl as apiBaseUrl } from '../api/catalogClient';
 
 /**
  * PUBLIC_INTERFACE
@@ -29,29 +29,27 @@ export default function SkillsCatalog() {
     });
   }, [skills, query]);
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadSkills = () => {
     actions.setLoading(true);
     actions.clearError();
-
-    fetchCatalogSkills({ limit: 24, offset: 0 })
+    return fetchCatalogSkills({ limit: 24, offset: 0 })
       .then((result) => {
-        if (!isMounted) return;
         const arr = Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : []);
         setSkills(arr.filter(Boolean));
       })
       .catch((err) => {
-        if (!isMounted) return;
         actions.setError(err?.message || 'Failed to load skills');
-        setSkills([]); // ensure render continues with empty list
+        setSkills([]);
       })
       .finally(() => {
-        if (isMounted) actions.setLoading(false);
+        actions.setLoading(false);
       });
+  };
 
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    let isMounted = true;
+    loadSkills().finally(() => { if (!isMounted) return; });
+    return () => { isMounted = false; };
   }, [actions]);
 
   return (
@@ -132,10 +130,29 @@ export default function SkillsCatalog() {
                 No skills found. Try clearing search.
               </p>
               <p style={{ margin: '.5rem 0 0', color: 'var(--muted)' }}>
-                If this is a fresh setup, seed the backend: <code>PYTHONPATH=backend python3 -m src.seeds.run_all_seeds</code>.
+                Backend API base: <code>{apiBaseUrl}</code>
               </p>
-              <p style={{ margin: '.25rem 0 0' }}>
-                Need help? Visit <a href="http://localhost:3001/__backend_help" target="_blank" rel="noreferrer">Backend Help</a>.
+              <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={async () => {
+                    const ok = await runCatalogSeeds();
+                    if (ok) {
+                      await loadSkills();
+                    } else {
+                      actions.setError('Seeding failed. See backend logs or open /__backend_help.');
+                    }
+                  }}
+                >
+                  Seed data and reload
+                </button>
+                <a className="btn btn-secondary" href={`${apiBaseUrl}/__backend_help`} target="_blank" rel="noreferrer">
+                  Backend Help
+                </a>
+              </div>
+              <p style={{ margin: '.5rem 0 0', color: 'var(--muted)' }}>
+                Manual seed: <code>PYTHONPATH=backend python3 -m src.seeds.run_all_seeds</code>
               </p>
             </div>
           )}

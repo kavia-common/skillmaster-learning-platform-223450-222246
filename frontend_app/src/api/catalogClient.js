@@ -177,6 +177,21 @@ export async function fetchLessonById(id, { skillSlug } = {}) {
   throw new Error(`Failed to fetch lesson by id: ${id}`);
 }
 
+/** Trigger backend seeds endpoint for local/dev convenience. Returns boolean. */
+export async function runSeeds() {
+  try {
+    const res = await fetch(`${API_BASE}/__run_seeds`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => ({}));
+    return !!data?.ok;
+  } catch {
+    return false;
+  }
+}
+
 export const baseUrl = API_BASE;
 
 export default {
@@ -189,4 +204,5 @@ export default {
   fetchSkillBySlug,
   fetchLessonsBySkillSlug,
   fetchLessonById,
+  runSeeds,
 };

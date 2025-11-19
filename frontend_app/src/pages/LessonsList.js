@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import EntityCard from "../components/common/EntityCard";
 import ProgressBar from "../components/common/ProgressBar";
-import { getModule, listLessonsByModule } from "../api/relationalClient";
+import { getModule, listLessonsByModule, runSeeds as runRelationalSeeds, baseUrl as apiBaseUrl } from "../api/relationalClient";
 
 /**
  * PUBLIC_INTERFACE
@@ -110,10 +110,29 @@ export default function LessonsList() {
               <div className="card" style={{ padding: "1rem" }}>
                 <p className="empty-state" style={{ margin: 0 }}>No lessons found.</p>
                 <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
-                  Check module ID <code>{String(moduleId)}</code> exists and backend seed was run.
+                  Backend API base: <code>{apiBaseUrl}</code>
                 </p>
-                <p style={{ margin: ".25rem 0 0" }}>
-                  See <a href="http://localhost:3001/__backend_help" target="_blank" rel="noreferrer">Backend Help</a> for diagnostics and seeding commands.
+                <div style={{ display: "flex", gap: ".5rem", marginTop: ".5rem", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={async () => {
+                      const ok = await runRelationalSeeds();
+                      if (ok) {
+                        navigate(0);
+                      } else {
+                        setErr("Seeding failed. Open Backend Help for details.");
+                      }
+                    }}
+                  >
+                    Seed data and reload
+                  </button>
+                  <a className="btn btn-secondary" href={`${apiBaseUrl}/__backend_help`} target="_blank" rel="noreferrer">
+                    Backend Help
+                  </a>
+                </div>
+                <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
+                  Check module ID <code>{String(moduleId)}</code> exists and backend seed was run.
                 </p>
               </div>
             )}

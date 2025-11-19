@@ -233,6 +233,21 @@ function LessonIdToNumber(id) {
   return Number.isFinite(n) ? n : id;
 }
 
+/** Trigger backend seeds endpoint for local/dev convenience. Returns boolean. */
+export async function runSeeds() {
+  try {
+    const res = await fetch(`${BASE_URL}/__run_seeds`, {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => ({}));
+    return !!data?.ok;
+  } catch {
+    return false;
+  }
+}
+
 export const baseUrl = BASE_URL;
 
 // Aggregate default export at end to avoid hoist/ordering lint complaints
@@ -249,6 +264,7 @@ const relationalApi = {
   getUserProgress,
   getLessonProgressForUser,
   markLessonComplete,
+  runSeeds,
 };
 
 export default relationalApi;

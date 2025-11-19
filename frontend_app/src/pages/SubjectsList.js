@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import EntityCard from "../components/common/EntityCard";
 import ProgressBar from "../components/common/ProgressBar";
-import { listSubjects } from "../api/relationalClient";
+import { listSubjects, runSeeds as runRelationalSeeds, baseUrl as apiBaseUrl } from "../api/relationalClient";
 
 /**
  * PUBLIC_INTERFACE
@@ -116,11 +116,30 @@ export default function SubjectsList() {
               <div className="card" style={{ padding: "1rem" }}>
                 <p className="empty-state" style={{ margin: 0 }}>No subjects found.</p>
                 <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
-                  If you just started the backend, you may need to seed data:
-                  <code style={{ marginLeft: 6 }}>PYTHONPATH=backend python3 -m src.seeds.run_all_seeds</code>
+                  Backend API base: <code>{apiBaseUrl}</code>
                 </p>
-                <p style={{ margin: ".25rem 0 0" }}>
-                  See <a href="http://localhost:3001/__backend_help" target="_blank" rel="noreferrer">Backend Help</a> for route checks and CORS tips.
+                <div style={{ display: "flex", gap: ".5rem", marginTop: ".5rem", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={async () => {
+                      const ok = await runRelationalSeeds();
+                      if (ok) {
+                        // reload current page
+                        navigate(0);
+                      } else {
+                        setErr("Seeding failed. Open Backend Help for details.");
+                      }
+                    }}
+                  >
+                    Seed data and reload
+                  </button>
+                  <a className="btn btn-secondary" href={`${apiBaseUrl}/__backend_help`} target="_blank" rel="noreferrer">
+                    Backend Help
+                  </a>
+                </div>
+                <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
+                  Manual seed: <code>PYTHONPATH=backend python3 -m src.seeds.run_all_seeds</code>
                 </p>
               </div>
             )}

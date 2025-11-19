@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import EntityCard from "../components/common/EntityCard";
 import ProgressBar from "../components/common/ProgressBar";
-import { getSubject, listModulesBySubject } from "../api/relationalClient";
+import { getSubject, listModulesBySubject, runSeeds as runRelationalSeeds, baseUrl as apiBaseUrl } from "../api/relationalClient";
 
 /**
  * PUBLIC_INTERFACE
@@ -99,10 +99,29 @@ export default function ModulesList() {
               <div className="card" style={{ padding: "1rem" }}>
                 <p className="empty-state" style={{ margin: 0 }}>No modules found.</p>
                 <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
-                  Ensure the backend has seeded data and that subject ID <code>{String(subjectId)}</code> exists.
+                  Backend API base: <code>{apiBaseUrl}</code>
                 </p>
-                <p style={{ margin: ".25rem 0 0" }}>
-                  Quick check: <a href="/__backend_help">Backend Help</a>
+                <div style={{ display: "flex", gap: ".5rem", marginTop: ".5rem", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={async () => {
+                      const ok = await runRelationalSeeds();
+                      if (ok) {
+                        navigate(0);
+                      } else {
+                        setErr("Seeding failed. Open Backend Help for details.");
+                      }
+                    }}
+                  >
+                    Seed data and reload
+                  </button>
+                  <a className="btn btn-secondary" href={`${apiBaseUrl}/__backend_help`} target="_blank" rel="noreferrer">
+                    Backend Help
+                  </a>
+                </div>
+                <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
+                  Ensure the backend has seeded data and that subject ID <code>{String(subjectId)}</code> exists.
                 </p>
               </div>
             )}

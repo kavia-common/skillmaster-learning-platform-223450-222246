@@ -1,78 +1,40 @@
 import React from "react";
 import config from "../config/env";
+import { baseUrl as relationalBase } from "../api/relationalClient";
+import { baseUrl as catalogBase } from "../api/catalogClient";
 
 /**
  * PUBLIC_INTERFACE
- * BackendHelp - Quick links and guidance to verify backend connectivity, CORS, and seeding.
- * Use this when seeing "Failed to fetch" or empty lists to verify configuration quickly.
+ * BackendHelp - Frontend helper page to validate API base URL, common routes, and CORS notes.
+ * Route: /__backend_help (mirrors backend helper for convenience)
  */
 export default function BackendHelp() {
-  const base = (config.apiBaseUrl || "").replace(/\/+$/, "");
-  const checks = [
-    { path: "/", label: "Health (/)" },
-    { path: "/docs", label: "OpenAPI Docs (/docs)" },
-    { path: "/__run_seeds", label: "Run Seeds Helper (/__run_seeds)" },
-    { path: "/skills", label: "Relational Skills (/skills)" },
-    { path: "/content/skills", label: "Catalog Skills (/content/skills)" },
-    { path: "/subjects", label: "Subjects (/subjects)" },
-    { path: "/subjects/1/modules", label: "Modules by Subject (/subjects/{id}/modules)" },
-    { path: "/modules", label: "Modules (/modules)" },
-    { path: "/modules/1/lessons", label: "Lessons by Module (/modules/{id}/lessons)" },
-  ];
-
+  const apiBase = config.apiBaseUrl || relationalBase || catalogBase;
   return (
     <section className="card" style={{ padding: "1rem" }} aria-label="Backend Help">
       <header style={{ marginBottom: "1rem" }}>
-        <h1 style={{ marginTop: 0 }}>Backend Connectivity Help</h1>
-        <p>API Base: <code>{base}</code></p>
+        <h1 style={{ marginTop: 0 }}>Backend Help</h1>
         <p style={{ color: "var(--muted)" }}>
-          This backend is configured to allow CORS from <code>http://localhost:3000</code> with
-          <code> allow_credentials=true</code>. If requests still fail, verify your environment variables and that the backend is running.
+          Use these links to quickly verify the backend is up, CORS is configured, and data is seeded.
         </p>
       </header>
-
-      <ol>
-        <li>
-          Ensure backend is running. OpenAPI should load at{" "}
-          <a href={`${base}/docs`} target="_blank" rel="noreferrer">
-            {base}/docs
-          </a>.
-        </li>
-        <li>
-          Confirm CORS allows <code>http://localhost:3000</code> and that credentials are included in requests.
-          The frontend uses <code>credentials="include"</code> in fetch. If running on a different host/port, update
-          <code> REACT_APP_API_BASE</code>/<code>REACT_APP_BACKEND_URL</code>.
-        </li>
-        <li>
-          Seed data if lists are empty:
-          <pre
-            style={{
-              whiteSpace: "pre-wrap",
-              background: "var(--surface-2)",
-              padding: ".75rem",
-              borderRadius: 8,
-              marginTop: ".5rem",
-            }}
-          >{`cd skillmaster-learning-platform-223450-222247
-PYTHONPATH=backend python3 -m src.seeds.run_all_seeds`}</pre>
-          Tip: You can also set <code>SEED_RELATIONAL_DATA=true</code> before starting the FastAPI server to seed automatically on startup.
-        </li>
-        <li>
-          See <code>frontend_app/README.md</code> and <code>BackendChecklist.md</code> for more notes.
-        </li>
-      </ol>
-
-      <div className="card" role="region" aria-label="Quick links" style={{ padding: "1rem" }}>
-        <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Quick links</h2>
-        <ul>
-          {checks.map((c) => (
-            <li key={c.path}>
-              <a href={`${base}${c.path}`} target="_blank" rel="noreferrer">
-                {c.label}
-              </a>
-            </li>
-          ))}
+      <div className="card" style={{ padding: "1rem" }}>
+        <p style={{ marginTop: 0 }}>
+          API base (from env): <code>{apiBase}</code>
+        </p>
+        <ul style={{ margin: "0.5rem 0", paddingLeft: "1.25rem" }}>
+          <li><a href={`${apiBase}/docs`} target="_blank" rel="noreferrer">/docs</a></li>
+          <li><a href={`${apiBase}/__backend_help`} target="_blank" rel="noreferrer">/__backend_help (backend)</a></li>
+          <li><a href={`${apiBase}/skills`} target="_blank" rel="noreferrer">/skills</a> (relational)</li>
+          <li><a href={`${apiBase}/content/skills`} target="_blank" rel="noreferrer">/content/skills</a> (catalog)</li>
+          <li><a href={`${apiBase}/subjects`} target="_blank" rel="noreferrer">/subjects</a></li>
+          <li><a href={`${apiBase}/modules?subject_id=1`} target="_blank" rel="noreferrer">/modules?subject_id=1</a></li>
+          <li><a href={`${apiBase}/lessons?module_id=1`} target="_blank" rel="noreferrer">/lessons?module_id=1</a></li>
+          <li><a href={`${apiBase}/__run_seeds`} target="_blank" rel="noreferrer">/__run_seeds</a> (run seeds)</li>
         </ul>
+        <p style={{ marginTop: "0.5rem", color: "var(--muted)" }}>
+          Ensure backend CORS allows http://localhost:3000 and allow_credentials=true.
+        </p>
       </div>
     </section>
   );
