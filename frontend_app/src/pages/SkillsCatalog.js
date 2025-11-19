@@ -7,53 +7,58 @@ import { fetchSkills as fetchCatalogSkills } from '../api/catalogClient';
 /**
  * PUBLIC_INTERFACE
  * SkillsCatalog - Lists available micro-skills with simple search/filter placeholders.
- * Now wired to backend:
- *   GET /skills -> [{id, name, description, tags}]
- *
- * Smoke path (manual):
- * 1) Start backend (FastAPI) on :3001 and frontend on :3000.
- * 2) Open /skills, expect a loading indicator, then cards populated from /skills data.
- * 3) Click "View Skill" to navigate to /skills/:id which fetches the detail.
+ * Uses corrected endpoints via catalogClient: /content/skills (fallback /skills).
  */
 export default function SkillsCatalog() {
-  const { state, actions, api } = useAppState();
+  const { state, actions } = useAppState();
   const [skills, setSkills] = useState([]);
   const [query, setQuery] = useState('');
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return skills;
-    return skills.filter(s =>
-      s.name?.toLowerCase().includes(q) ||
-      s.description?.toLowerCase().includes(q) ||
-      (Array.isArray(s.tags) && s.tags.some(t => t.toLowerCase().includes(q)))
-    );
+    const q = (query || '').trim().toLowerCase();
+    if (!q) return Array.isArray(skills) ? skills : [];
+    return (Array.isArray(skills) ? skills : []).filter((s) => {
+      const name = (s?.name || s?.title || '').toLowerCase();
+      const desc = (s?.description || '').toLowerCase();
+      const tags = Array.isArray(s?.tags) ? s.tags.map(String) : [];
+      return (
+        name.includes(q) ||
+        desc.includes(q) ||
+        tags.some((t) => String(t || '').toLowerCase().includes(q))
+      );
+    });
   }, [skills, query]);
 
   useEffect(() => {
     let isMounted = true;
     actions.setLoading(true);
     actions.clearError();
-    // Prefer content catalog endpoint with pagination; fallback handled inside client
+
     fetchCatalogSkills({ limit: 24, offset: 0 })
-      .then(res => {
+      .then((res) => {
         if (!isMounted) return;
-        const items = Array.isArray(res.data?.items)
-          ? res.data.items
-          : Array.isArray(res.data)
-            ? res.data
-            : [];
-        setSkills(items);
+        // Accept either {items:[]}, [] or unexpected shapes; coerce to safe array
+        const data = res?.data;
+        const items = Array.isArray(data?.items)
+          ? data.items
+          : Array.isArray(data)
+          ? data
+          : [];
+        setSkills(Array.isArray(items) ? items.filter(Boolean) : []);
       })
-      .catch(err => {
+      .catch((err) => {
         if (!isMounted) return;
-        actions.setError(err.message || 'Failed to load skills');
+        actions.setError(err?.message || 'Failed to load skills');
+        setSkills([]); // ensure render continues with empty list
       })
       .finally(() => {
         if (isMounted) actions.setLoading(false);
       });
-    return () => { isMounted = false; };
-  }, [api, actions]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [actions]);
 
   return (
     <section className="card" style={{ padding: '1rem' }} aria-label="Skills Catalog">
@@ -98,37 +103,36 @@ export default function SkillsCatalog() {
         </button>
       </form>
 
-      {state.ui.error && (
+      {state.ui.error ? (
         <div role="alert" className="card" style={{ padding: '.75rem', borderColor: 'var(--error)' }}>
           <strong style={{ color: 'var(--error)' }}>Error:</strong>{' '}
           <span>{String(state.ui.error)}</span>
         </div>
-      )}
+      ) : null}
 
       {state.ui.loading ? (
         <LoadingSpinner label="Loading skills" />
       ) : (
-        <div
-          role="list"
-          aria-label="Skill list"
-          className="grid-autofit"
-        >
-          {filtered.map((s) => (
-            <article key={s.id} role="listitem" className="card" style={{ padding: '1rem' }}>
-              <h2 style={{ margin: '0 0 .5rem', fontSize: '1rem' }}>{s.name}</h2>
-              <p style={{ margin: '0 0 1rem', color: 'var(--muted)' }}>
-                {s.description || 'No description'}
-              </p>
-              <Link
-                className="btn"
-                to={`/skills/${encodeURIComponent(s.id)}`}
-                aria-label={`View details for ${s.name}`}
-              >
-                View Skill
-              </Link>
-            </article>
-          ))}
-          {!filtered.length && !state.ui.error && (
+        <div role="list" aria-label="Skill list" className="grid-autofit">
+          {(filtered || []).map((s) => {
+            const idOrSlug = s?.id ?? s?.slug ?? s?.name ?? '';
+            const name = s?.name || s?.title || idOrSlug;
+            const desc = s?.description || 'No description';
+            return (
+              <article key={idOrSlug} role="listitem" className="card" style={{ padding: '1rem' }}>
+                <h2 style={{ margin: '0 0 .5rem', fontSize: '1rem' }}>{name}</h2>
+                <p style={{ margin: '0 0 1rem', color: 'var(--muted)' }}>{desc}</p>
+                <Link
+                  className="btn"
+                  to={`/skills/${encodeURIComponent(idOrSlug)}`}
+                  aria-label={`View details for ${name}`}
+                >
+                  View Skill
+                </Link>
+              </article>
+            );
+          })}
+          {!filtered?.length && !state.ui.error && (
             <div className="card" style={{ padding: '1rem' }}>
               <p className="empty-state" style={{ margin: 0 }}>
                 No skills found. Try clearing filters or adjusting your search.
