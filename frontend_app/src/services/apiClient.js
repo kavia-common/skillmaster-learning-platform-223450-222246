@@ -37,17 +37,27 @@ async function parseJsonSafe(response) {
   }
 }
 
-/**
+/** 
  * Internal request function using fetch.
+ * JWT token (if present in localStorage) is auto-attached for /api/ URLs.
  */
 async function request(path, options = {}) {
   const startedAt = performance.now();
   const url = `${config.apiBaseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
 
+  // Add JWT (if present) for /api/ paths
+  let token = null, needsAuth = false;
+  try {
+    token = (typeof localStorage !== "undefined" && localStorage.getItem("jwt_token")) || null;
+    needsAuth = /^\/api\//.test(path);
+  } catch {
+    token = null; needsAuth = false;
+  }
   const headers = {
     Accept: "application/json",
     "Content-Type": "application/json",
     ...(options.headers || {}),
+    ...(needsAuth && token ? { Authorization: `Bearer ${token}` } : {})
   };
 
   const opts = {
@@ -130,9 +140,7 @@ export function createApiClient(customBaseUrl) {
    */
   const baseCfg = { ...config, apiBaseUrl: (customBaseUrl || config.apiBaseUrl).replace(/\/+$/, "") };
   const scopedRequest = (path, options) => {
-    const prev = config.apiBaseUrl;
-    // Temporarily override (kept simple; avoid global mutation in larger apps)
-    return request.call({ }, path, options).then((result) => result);
+    return request.call({}, path, options).then((result) => result);
   };
 
   return {
