@@ -32,6 +32,14 @@ export default function SkillsProgress() {
   const [skills, setSkills] = useState([]);
   const [progressEntries, setProgressEntries] = useState([]);
   const [error, setError] = useState("");
+  const [apiBase, setApiBase] = useState(() => {
+    try {
+      const m = require("../api/relationalClient");
+      return m?.baseUrl || "";
+    } catch {
+      return "";
+    }
+  });
 
   // Fetch skills once (all levels) and user progress
   useEffect(() => {
@@ -41,16 +49,34 @@ export default function SkillsProgress() {
 
     const load = async () => {
       try {
+        // Preflight: HEAD/GET openapi.json
+        const base = apiBase || "";
+        try {
+          const head = await fetch(`${base}/openapi.json`, { method: "HEAD", credentials: "include", mode: "cors" });
+          if (!head.ok) {
+            // try GET
+            const get = await fetch(`${base}/openapi.json`, { method: "GET", credentials: "include", mode: "cors" });
+            if (!get.ok) {
+              throw new Error(`Backend openapi.json probe failed with status ${get.status}`);
+            }
+          }
+        } catch (e) {
+          throw new Error(
+            `Cannot reach backend at ${base}. ${e?.message || e}. Check server, CORS, or REACT_APP_API_BASE.`
+          );
+        }
+
         // Load skills - fetch without filters to get a broad list
         const resSkills = await fetchCatalogSkills({ limit: 100, offset: 0 });
         const skillsArr = Array.isArray(resSkills?.data) ? resSkills.data : [];
         // Load progress entries for the user
         const resProgress = await relationalApi.getUserProgress(userId).catch(async () => {
           // If aggregated endpoint not available, fallback to paged list
-          const alt = await fetch(`/progress?user_id=${encodeURIComponent(userId)}&page_size=200`, {
+          const alt = await fetch(`${base}/progress?user_id=${encodeURIComponent(userId)}&page_size=200`, {
             method: "GET",
             credentials: "include",
             headers: { Accept: "application/json" },
+            mode: "cors",
           });
           const data = alt.ok ? await alt.json() : { items: [] };
           const items = Array.isArray(data?.progress?.entries)
@@ -192,6 +218,9 @@ export default function SkillsProgress() {
         <h1 style={{ marginTop: 0 }}>Skills</h1>
         <p style={{ color: "var(--muted)" }}>
           Explore micro-skills grouped by level. Track your progress for each skill.
+        </p>
+        <p style={{ color: "var(--muted)", fontSize: ".9rem" }}>
+          API base: <code>{apiBase}</code> • <a href={`${apiBase}/__backend_help`} target="_blank" rel="noreferrer">Backend Help</a>
         </p>
       </header>
 

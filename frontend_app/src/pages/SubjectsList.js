@@ -73,6 +73,9 @@ export default function SubjectsList() {
       <header style={{ marginBottom: "1rem" }}>
         <h1 style={{ marginTop: 0 }}>Subjects</h1>
         <p style={{ color: "var(--muted)" }}>Explore subjects, then drill into modules and lessons.</p>
+        <p style={{ color: "var(--muted)", fontSize: ".9rem" }}>
+          API base: <code>{apiBaseUrl}</code> • <a href={`${apiBaseUrl}/__backend_help`} target="_blank" rel="noreferrer">Backend Help</a>
+        </p>
       </header>
 
       <form onSubmit={submitSearch} role="search" aria-label="Subject search" style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: ".5rem", marginBottom: ".75rem" }}>
