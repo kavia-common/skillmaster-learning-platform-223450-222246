@@ -35,9 +35,10 @@ export default function SkillsCatalog() {
     actions.clearError();
 
     fetchCatalogSkills({ limit: 24, offset: 0 })
-      .then((items) => {
+      .then((result) => {
         if (!isMounted) return;
-        setSkills(Array.isArray(items) ? items.filter(Boolean) : []);
+        const arr = Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : []);
+        setSkills(arr.filter(Boolean));
       })
       .catch((err) => {
         if (!isMounted) return;

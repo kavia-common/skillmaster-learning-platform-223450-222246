@@ -44,6 +44,8 @@ export default function AppRouter() {
 
         {/* New Skills list that reads query params category/page */}
         <Route path="/skills" element={<SkillsList />} />
+        {/* Alias to directly test the catalog page variant */}
+        <Route path="/skills-catalog" element={<SkillsCatalog />} />
 
         {/* Keep legacy for tests linking by internal ID */}
         <Route path="/skills/:skillId" element={<SkillDetail />} />
