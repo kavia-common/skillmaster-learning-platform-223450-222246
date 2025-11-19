@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { useAppState } from '../state/store';
-import relationalApi from '../api/relationalClient';
 
 /**
  * PUBLIC_INTERFACE
@@ -12,13 +11,12 @@ import relationalApi from '../api/relationalClient';
  * Resume flow:
  * - GET /progress?user_id={id}&page_size=20 (or more)
  * - Pick the most recent entry with a lesson_id
- * - Validate lesson exists via GET /lessons/{lesson_id}
  * - Navigate to /learn/:lessonId
  * - Gracefully handle missing items or 404 with an alert
  */
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { state, actions } = useAppState();
+  const { state, actions, api } = useAppState();
   const [resumeBusy, setResumeBusy] = useState(false);
   const [resumeError, setResumeError] = useState('');
 
@@ -27,44 +25,46 @@ export default function Dashboard() {
     setResumeBusy(true);
     actions.clearError();
     try {
-      // Fetch recent progress entries
-      const res = await relationalApi.get(`/progress?user_id=${encodeURIComponent(state.currentUser.id)}&page_size=50`);
-      const items = Array.isArray(res?.data?.items) ? res.data.items : (Array.isArray(res?.data?.entries) ? res.data.entries : (Array.isArray(res?.data) ? res.data : []));
-      if (!items || items.length === 0) {
+      // Fetch recent progress entries via shared api client
+      const res = await api.get(`/progress?user_id=${encodeURIComponent(state.currentUser.id)}&page_size=50`);
+      // Accept multiple possible shapes: {items}, {entries}, array, or nested {progress: {entries}}
+      const itemsRaw =
+        (res?.data?.progress && Array.isArray(res.data.progress.entries) && res.data.progress.entries) ||
+        (Array.isArray(res?.data?.items) && res.data.items) ||
+        (Array.isArray(res?.data?.entries) && res.data.entries) ||
+        (Array.isArray(res?.data) && res.data) ||
+        [];
+      const items = Array.isArray(itemsRaw) ? itemsRaw : [];
+
+      if (items.length === 0) {
         setResumeError('No recent activity found to resume.');
         return;
       }
-      // Sort descending by created_at/updated_at/timestamp if present
+
+      // Sort by updated_at/created_at/timestamp descending
       const sorted = [...items].sort((a, b) => {
         const ta = new Date(a.updated_at || a.created_at || a.timestamp || 0).getTime();
         const tb = new Date(b.updated_at || b.created_at || b.timestamp || 0).getTime();
         return tb - ta;
       });
-      // Find first item with lesson_id
-      const entry = sorted.find(e => e.lesson_id != null);
-      if (!entry || entry.lesson_id == null) {
+
+      // Pick the most recent entry that has a valid lesson_id
+      const entry = sorted.find(e => e.lesson_id !== undefined && e.lesson_id !== null && String(e.lesson_id).trim() !== '');
+      if (!entry) {
         setResumeError('Could not determine a lesson to resume.');
         return;
       }
-      const lessonId = String(entry.lesson_id);
 
-      // Validate lesson exists (relational expects numeric ids; API helper handles coercion)
-      try {
-        await relationalApi.get(`/lessons/${encodeURIComponent(lessonId)}`);
-      } catch (e) {
-        // If no lesson in relational, try catalog-style fallback: navigate to /lessons/:id (which loads and handles 404 in-page)
-        // But still prefer the interactive player route for consistency.
-        // We will proceed to navigate and let the target handle any display errors.
-      }
+      const lessonId = encodeURIComponent(String(entry.lesson_id));
 
-      // Navigate to interactive player; attach minimal context if present
-      navigate(`/learn/${encodeURIComponent(lessonId)}`, { state: { lessonTitle: entry.lesson_title || '' } });
+      // Navigate to the interactive player route; it will handle content display and errors gracefully.
+      navigate(`/learn/${lessonId}`, { state: { lessonTitle: entry.lesson_title || '' } });
     } catch (err) {
       setResumeError(err.message || 'Failed to resume last lesson.');
     } finally {
       setResumeBusy(false);
     }
-  }, [navigate, state.currentUser.id, actions]);
+  }, [navigate, state.currentUser.id, actions, api]);
 
   return (
     <section
