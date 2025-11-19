@@ -7,7 +7,7 @@ import config from "../config/env";
  * Resolves endpoints across both content (/content/*) and relational APIs to maximize compatibility.
  * Includes robust normalization for {items, results, data, array} payload shapes.
  */
-const API_BASE = config.apiBaseUrl;
+const API_BASE = (config.apiBaseUrl || "").replace(/\/+$/, "");
 
 /** Normalize list responses to an array. */
 function toArrayPayload(data) {

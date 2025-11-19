@@ -23,6 +23,7 @@ export default function BackendHelp() {
           API base (from env): <code>{apiBase}</code>
         </p>
         <ul style={{ margin: "0.5rem 0", paddingLeft: "1.25rem" }}>
+          <li><a href={`${apiBase}/`} target="_blank" rel="noreferrer">/ (health)</a></li>
           <li><a href={`${apiBase}/docs`} target="_blank" rel="noreferrer">/docs</a></li>
           <li><a href={`${apiBase}/__backend_help`} target="_blank" rel="noreferrer">/__backend_help (backend)</a></li>
           <li><a href={`${apiBase}/skills`} target="_blank" rel="noreferrer">/skills</a> (relational)</li>

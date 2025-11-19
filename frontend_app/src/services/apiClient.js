@@ -44,7 +44,9 @@ async function parseJsonSafe(response) {
  */
 async function request(path, options = {}) {
   const startedAt = performance.now();
-  const url = `${config.apiBaseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
+  const base = (config.apiBaseUrl || "").replace(/\/+$/, "");
+  const tail = String(path || "");
+  const url = `${base}${tail.startsWith("/") ? "" : "/"}${tail}`;
 
   const headers = {
     Accept: "application/json",
