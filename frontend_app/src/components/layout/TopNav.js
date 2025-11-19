@@ -47,7 +47,7 @@ export default function TopNav() {
             className="btn btn-secondary"
             type="button"
             aria-label="Toggle theme"
-            title="Theme (coming soon)"
+            title="Toggle theme (coming soon)"
             style={{
               borderColor: 'var(--border)',
             }}

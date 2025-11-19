@@ -123,7 +123,9 @@ export default function SkillsCatalog() {
           ))}
           {!filtered.length && !state.ui.error && (
             <div className="card" style={{ padding: '1rem' }}>
-              <p className="empty-state" style={{ margin: 0 }}>No skills found.</p>
+              <p className="empty-state" style={{ margin: 0 }}>
+                No skills found. Try clearing filters or adjusting your search.
+              </p>
             </div>
           )}
         </div>

@@ -1,11 +1,12 @@
 # Frontend Environment and Routes
 
-This frontend consumes the backend catalog APIs.
+This frontend consumes the backend catalog and relational APIs.
 
 ## Environment
 
-- REACT_APP_BACKEND_URL: Base URL of backend (FastAPI). Example: http://localhost:3001
-  - If not set, the app falls back to `window.location.origin` and swaps port 3000 -> 3001 for local preview.
+- REACT_APP_API_BASE: Preferred base URL of backend (FastAPI). Example: http://localhost:3001
+- REACT_APP_BACKEND_URL: Legacy/alternate base URL, used if API_BASE not set.
+  - If neither is set, the app falls back to `window.location.origin` and swaps port 3000 -> 3001 for local preview.
 
 Copy .env.example to .env and adjust as needed.
 

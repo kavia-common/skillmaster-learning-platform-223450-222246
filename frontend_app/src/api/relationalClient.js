@@ -1,23 +1,11 @@
+import config from "../config/env";
+
 //
 // PUBLIC_INTERFACE
 // relationalClient.js - API helpers for Subjects → Modules → Lessons → Activities/Quizzes
-// Uses env-based base URL similar to catalogClient. Endpoints derived from backend OpenAPI.
+// Uses env-based base URL from centralized config (REACT_APP_API_BASE or REACT_APP_BACKEND_URL).
 //
-const pickBaseUrl = () => {
-  const envBase =
-    (process.env.REACT_APP_API_BASE && process.env.REACT_APP_API_BASE.trim()) ||
-    (process.env.REACT_APP_BACKEND_URL && process.env.REACT_APP_BACKEND_URL.trim());
-  if (envBase) return envBase.replace(/\/+$/, "");
-  try {
-    const origin = window.location.origin;
-    if (origin.includes(":3000")) return origin.replace(":3000", ":3001");
-    return origin;
-  } catch {
-    return "http://localhost:3001";
-  }
-};
-
-const BASE_URL = pickBaseUrl();
+const BASE_URL = config.apiBaseUrl;
 
 async function handleResponse(res) {
   const text = await res.text();
@@ -130,7 +118,7 @@ export async function listLessonsByModule(moduleId, { search, page = 1, page_siz
   );
 }
 
-// PUBLIC_INTERFACE
+ // PUBLIC_INTERFACE
 export async function getLesson(lessonId, { include_nested = false } = {}) {
   /**
    * Get lesson by id; include_nested=true to include activities.
@@ -143,17 +131,63 @@ export async function getLesson(lessonId, { include_nested = false } = {}) {
   );
 }
 
-// PUBLIC_INTERFACE
+/**
+ * PUBLIC_INTERFACE
+ * listActivitiesByLesson - List activities for a lesson with pagination.
+ * @param {string|number} lessonId
+ * @param {{page?:number,page_size?:number}} [options]
+ */
 export async function listActivitiesByLesson(lessonId, { page = 1, page_size = 20 } = {}) {
-  /**
-   * List activities for a lesson with pagination.
-   */
   const qs = new URLSearchParams();
   if (page) qs.set("page", String(page));
   if (page_size) qs.set("page_size", String(page_size));
-  const url = `${BASE_URL}/lessons/${encodeURIComponent(LessonIdToNumber(lessonId))}/activities${qs.toString() ? `?${qs.toString()}` : ""}`;
+  const url = `${BASE_URL}/lessons/${encodeURIComponent(LessonIdToNumber(lessonId))}/activities${
+    qs.toString() ? `?${qs.toString()}` : ""
+  }`;
   return handleResponse(
     await fetch(url, { method: "GET", headers: { Accept: "application/json" }, credentials: "include" })
+  );
+}
+
+/**
+ * PUBLIC_INTERFACE
+ * getUserProgress - Get aggregated progress for a user.
+ * @param {string} userId
+ */
+export async function getUserProgress(userId) {
+  const url = `${BASE_URL}/progress/${encodeURIComponent(userId)}`;
+  return handleResponse(
+    await fetch(url, { method: "GET", headers: { Accept: "application/json" }, credentials: "include" })
+  );
+}
+
+/**
+ * PUBLIC_INTERFACE
+ * getLessonProgressForUser - Get all progress entries for a user and lesson.
+ * @param {string} userId
+ * @param {string|number} lessonId
+ */
+export async function getLessonProgressForUser(userId, lessonId) {
+  const url = `${BASE_URL}/progress/${encodeURIComponent(userId)}/lesson/${encodeURIComponent(lessonId)}`;
+  return handleResponse(
+    await fetch(url, { method: "GET", headers: { Accept: "application/json" }, credentials: "include" })
+  );
+}
+
+/**
+ * PUBLIC_INTERFACE
+ * markLessonComplete - Mark a lesson as completed for a user.
+ * @param {{user_id:string, skill_id:string, module_id:string, lesson_id:string|number, score?:number|null}} body
+ */
+export async function markLessonComplete(body) {
+  const url = `${BASE_URL}/progress/complete`;
+  return handleResponse(
+    await fetch(url, {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(body),
+    })
   );
 }
 
@@ -165,7 +199,8 @@ function LessonIdToNumber(id) {
 
 export const baseUrl = BASE_URL;
 
-export default {
+// Aggregate default export at end to avoid hoist/ordering lint complaints
+const relationalApi = {
   baseUrl: BASE_URL,
   listSubjects,
   getSubject,
@@ -175,4 +210,9 @@ export default {
   listLessonsByModule,
   getLesson,
   listActivitiesByLesson,
+  getUserProgress,
+  getLessonProgressForUser,
+  markLessonComplete,
 };
+
+export default relationalApi;
