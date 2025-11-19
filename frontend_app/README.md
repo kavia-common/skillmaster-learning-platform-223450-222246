@@ -15,6 +15,19 @@ In the project directory, you can run:
 
 ### `npm start`
 
+### End-to-end verification (local)
+1. Ensure backend is running at http://localhost:3001 and CORS allows http://localhost:3000 with allow_credentials=true.
+2. Seed backend data (run in `skillmaster-learning-platform-223450-222247`):
+   - `PYTHONPATH=backend python3 -m src.seeds.run_all_seeds`
+3. Start the frontend: `npm start` and open http://localhost:3000.
+4. Visit:
+   - /skills — should list skills (uses /content/skills with fallback /skills)
+   - /subjects — should list subjects
+   - /subjects/:id/modules — modules appear
+   - /modules/:id/lessons — lessons appear
+   - /learn/:lessonId — progress calls should work
+If troubleshooting, visit /__backend_help for quick checks.
+
 Runs the app in development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 

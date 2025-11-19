@@ -5,7 +5,7 @@ import config from "../config/env";
 // relationalClient.js - API helpers for Subjects → Modules → Lessons → Activities/Quizzes
 // Uses env-based base URL from centralized config (REACT_APP_API_BASE or REACT_APP_BACKEND_URL).
 //
-const BASE_URL = config.apiBaseUrl;
+const BASE_URL = config.apiBaseUrl; // Expect backend CORS to allow http://localhost:3000 with credentials
 
 async function handleResponse(res) {
   const text = await res.text();

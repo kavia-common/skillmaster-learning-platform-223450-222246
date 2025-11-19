@@ -19,6 +19,7 @@ import SubjectsList from '../pages/SubjectsList';
 import ModulesList from '../pages/ModulesList';
 import LessonsList from '../pages/LessonsList';
 import LessonDetailRelational from '../pages/LessonDetailRelational';
+import BackendHelp from '../pages/BackendHelp';
 
 /**
  * PUBLIC_INTERFACE
@@ -64,6 +65,7 @@ export default function AppRouter() {
         <Route path="/learn/:lessonId" element={<LessonPlayer />} />
 
         <Route path="/progress" element={<Progress />} />
+        <Route path="/__backend_help" element={<BackendHelp />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

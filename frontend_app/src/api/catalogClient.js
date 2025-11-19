@@ -6,7 +6,7 @@ import config from "../config/env";
 // Aligned with FastAPI routes: /content/skills, /content/skills/{slug}, /content/skills/{slug}/lessons,
 // with graceful fallbacks to /skills and related endpoints.
 //
-const BASE_URL = config.apiBaseUrl;
+const BASE_URL = config.apiBaseUrl; // Ensure FastAPI CORS allows http://localhost:3000 with credentials: true
 
 async function handleResponse(res) {
   const text = await res.text();
