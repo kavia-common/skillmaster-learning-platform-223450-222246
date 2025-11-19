@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppState } from '../state/store';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { fetchSkills as fetchCatalogSkills } from '../api/catalogClient';
 
 /**
  * PUBLIC_INTERFACE
@@ -33,10 +34,16 @@ export default function SkillsCatalog() {
     let isMounted = true;
     actions.setLoading(true);
     actions.clearError();
-    api.get('/skills')
+    // Prefer content catalog endpoint with pagination; fallback handled inside client
+    fetchCatalogSkills({ limit: 24, offset: 0 })
       .then(res => {
         if (!isMounted) return;
-        setSkills(Array.isArray(res.data) ? res.data : []);
+        const items = Array.isArray(res.data?.items)
+          ? res.data.items
+          : Array.isArray(res.data)
+            ? res.data
+            : [];
+        setSkills(items);
       })
       .catch(err => {
         if (!isMounted) return;

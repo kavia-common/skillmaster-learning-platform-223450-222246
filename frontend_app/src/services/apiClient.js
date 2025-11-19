@@ -128,11 +128,55 @@ export function createApiClient(customBaseUrl) {
    * @param {string} customBaseUrl - Base URL to use for this client.
    * @returns {{ get: Function, post: Function }}
    */
-  const baseCfg = { ...config, apiBaseUrl: (customBaseUrl || config.apiBaseUrl).replace(/\/+$/, "") };
-  const scopedRequest = (path, options) => {
-    const prev = config.apiBaseUrl;
-    // Temporarily override (kept simple; avoid global mutation in larger apps)
-    return request.call({ }, path, options).then((result) => result);
+  const baseUrl = (customBaseUrl || config.apiBaseUrl || "").replace(/\/*$/, "");
+
+  const scopedRequest = async (path, options = {}) => {
+    const startedAt = performance.now();
+    const url = `${baseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
+
+    const headers = {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    };
+
+    const opts = {
+      method: options.method || "GET",
+      headers,
+      credentials: options.credentials || "include",
+      body: options.body ? (typeof options.body === "string" ? options.body : JSON.stringify(options.body)) : undefined,
+      signal: options.signal,
+      mode: options.mode || "cors",
+      cache: options.cache || "no-cache",
+    };
+
+    try {
+      log("debug", "[api:scoped] →", opts.method, url);
+      const res = await fetch(url, opts);
+      const duration = Math.round(performance.now() - startedAt);
+      const data = await parseJsonSafe(res);
+
+      if (!res.ok) {
+        const apiErr = normalizeError(
+          new Error((data && (data.message || data.error || data.detail)) || `Request failed with status ${res.status}`),
+          {
+            status: res.status,
+            code: (data && (data.code || data.error?.code)) || "HTTP_ERROR",
+            url,
+            method: opts.method,
+          }
+        );
+        log("warn", "[api:scoped] ←", res.status, opts.method, url, `${duration}ms`);
+        throw apiErr;
+      }
+
+      log("info", "[api:scoped] ←", res.status, opts.method, url, `${duration}ms`);
+      return { status: res.status, ok: true, data, headers: res.headers };
+    } catch (err) {
+      const e = normalizeError(err, { url, method: (options.method || "GET") });
+      log("error", "[api:scoped] ✖", e.status || 0, e.method, e.url, e.message);
+      throw e;
+    }
   };
 
   return {
