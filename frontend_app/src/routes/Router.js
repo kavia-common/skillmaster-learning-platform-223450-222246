@@ -13,6 +13,7 @@ import Progress from '../pages/Progress';
 import SkillsList from '../pages/SkillsList';
 import SkillDetailNew from '../pages/SkillDetailNew';
 import LessonDetailNew from '../pages/LessonDetailNew';
+import SkillsProgress from '../pages/SkillsProgress';
 
 // New relational pages
 import SubjectsList from '../pages/SubjectsList';
@@ -42,10 +43,11 @@ export default function AppRouter() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
 
-        {/* New Skills list that reads query params category/page */}
-        <Route path="/skills" element={<SkillsList />} />
-        {/* Alias to directly test the catalog page variant */}
+        {/* New Skills list with progressive levels and per-skill progress */}
+        <Route path="/skills" element={<SkillsProgress />} />
+        {/* Aliases to access other list variants if needed */}
         <Route path="/skills-catalog" element={<SkillsCatalog />} />
+        <Route path="/skills-list" element={<SkillsList />} />
 
         {/* Keep relational detail by internal ID (explicit name to avoid confusion) */}
         <Route path="/skills/:skillId" element={<SkillDetail />} />

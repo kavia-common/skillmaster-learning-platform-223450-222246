@@ -121,6 +121,14 @@ export default function SkillsCatalog() {
                 >
                   View Skill
                 </Link>
+                <Link
+                  className="btn btn-secondary"
+                  to={`/skills/${encodeURIComponent(idOrSlug)}`}
+                  aria-label={`Start exploring lessons for ${name}`}
+                  style={{ marginLeft: ".5rem" }}
+                >
+                  Browse Lessons
+                </Link>
               </article>
             );
           })}
