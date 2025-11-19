@@ -14,6 +14,12 @@ import SkillsList from '../pages/SkillsList';
 import SkillDetailNew from '../pages/SkillDetailNew';
 import LessonDetailNew from '../pages/LessonDetailNew';
 
+// New relational pages
+import SubjectsList from '../pages/SubjectsList';
+import ModulesList from '../pages/ModulesList';
+import LessonsList from '../pages/LessonsList';
+import LessonDetailRelational from '../pages/LessonDetailRelational';
+
 /**
  * PUBLIC_INTERFACE
  * AppRouter - Defines the core application routes.
@@ -21,9 +27,13 @@ import LessonDetailNew from '../pages/LessonDetailNew';
  *   /                        -> Dashboard
  *   /skills                  -> Skills list (new), legacy component remains reachable
  *   /skills/:slug            -> Skill detail (new)
- *   /lessons/:id             -> Lesson detail (new)
+ *   /lessons/:id             -> Lesson detail (new) [catalog]
  *   /learn/:lessonId         -> Legacy lesson player
  *   /progress                -> Progress dashboard
+ *   /subjects                -> Subjects list
+ *   /subjects/:subjectId/modules -> Modules list for subject
+ *   /modules/:moduleId/lessons -> Lessons list for module
+ *   /lessons/:lessonId       -> Lesson detail with activities (relational) - note: shares path, keep both imports
  */
 export default function AppRouter() {
   return (
@@ -40,8 +50,15 @@ export default function AppRouter() {
         {/* New slug-based detail (also matches :skillId but provides new UX) */}
         <Route path="/skills/:slug" element={<SkillDetailNew />} />
 
-        {/* New lesson detail route as requested */}
+        {/* New lesson detail route as requested (catalog variant) */}
         <Route path="/lessons/:id" element={<LessonDetailNew />} />
+
+        {/* Relational navigation */}
+        <Route path="/subjects" element={<SubjectsList />} />
+        <Route path="/subjects/:subjectId/modules" element={<ModulesList />} />
+        <Route path="/modules/:moduleId/lessons" element={<LessonsList />} />
+        {/* Optionally expose an alternate detail path to avoid clash */}
+        <Route path="/rel/lessons/:lessonId" element={<LessonDetailRelational />} />
 
         {/* Existing lesson player route preserved */}
         <Route path="/learn/:lessonId" element={<LessonPlayer />} />
