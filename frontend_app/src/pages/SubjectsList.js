@@ -141,6 +141,9 @@ export default function SubjectsList() {
                 <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
                   Manual seed: <code>PYTHONPATH=backend python3 -m src.seeds.run_all_seeds</code>
                 </p>
+                <p style={{ margin: ".25rem 0 0", color: "var(--muted)" }}>
+                  Expected CORS: <code>Access-Control-Allow-Origin: {window.location.origin}</code> and <code>Access-Control-Allow-Credentials: true</code>
+                </p>
               </div>
             )}
           </div>

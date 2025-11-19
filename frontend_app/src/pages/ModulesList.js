@@ -123,6 +123,9 @@ export default function ModulesList() {
                 <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
                   Ensure the backend has seeded data and that subject ID <code>{String(subjectId)}</code> exists.
                 </p>
+                <p style={{ margin: ".25rem 0 0", color: "var(--muted)" }}>
+                  Expected CORS: <code>Access-Control-Allow-Origin: {window.location.origin}</code> and <code>Access-Control-Allow-Credentials: true</code>
+                </p>
               </div>
             )}
           </div>
