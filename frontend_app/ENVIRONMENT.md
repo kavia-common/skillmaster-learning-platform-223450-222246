@@ -12,6 +12,12 @@ This frontend consumes the backend catalog and relational APIs.
 
 Copy .env.example to .env and adjust as needed.
 
+CORS requirements:
+- Backend must allow origin http://localhost:3000
+- allow_credentials must be true (frontend includes credentials: 'include' on fetch)
+- Ensure the backend runs at http://localhost:3001 (default) or adjust REACT_APP_API_BASE.
+- Verify with: curl -i http://localhost:3001/
+
 ## Core Routes
 
 - /                      Dashboard

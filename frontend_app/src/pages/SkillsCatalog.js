@@ -43,7 +43,7 @@ export default function SkillsCatalog() {
           ? data.items
           : Array.isArray(data)
           ? data
-          : [];
+          : (data && typeof data === "object" && Array.isArray(data.results) ? data.results : []);
         setSkills(Array.isArray(items) ? items.filter(Boolean) : []);
       })
       .catch((err) => {

@@ -34,7 +34,11 @@ export default function SubjectsList() {
       .then((res) => {
         if (!mounted) return;
         // Support either {items,total} or array directly
-        const data = Array.isArray(res.data?.items) ? res.data.items : Array.isArray(res.data) ? res.data : [];
+        const data = Array.isArray(res.data?.items)
+          ? res.data.items
+          : Array.isArray(res.data)
+          ? res.data
+          : (Array.isArray(res.data?.results) ? res.data.results : []);
         const totalCount = typeof res.data?.total === "number" ? res.data.total : page * 12 + (data.length === 12 ? 12 : 0);
         setItems(data);
         setTotal(totalCount);

@@ -39,9 +39,18 @@ export async function listSubjects({ search, page = 1, page_size = 20 } = {}) {
   if (page) qs.set("page", String(page));
   if (page_size) qs.set("page_size", String(page_size));
   const url = `${BASE_URL}/subjects${qs.toString() ? `?${qs.toString()}` : ""}`;
-  return handleResponse(
-    await fetch(url, { method: "GET", headers: { Accept: "application/json" }, credentials: "include" })
-  );
+  const res = await fetch(url, { method: "GET", headers: { Accept: "application/json" }, credentials: "include" });
+  const parsed = await handleResponse(res);
+  // Normalize common shapes to { items, total }
+  const d = parsed.data;
+  if (Array.isArray(d)) {
+    return { ...parsed, data: { items: d, total: d.length } };
+  }
+  if (d && typeof d === "object" && !Array.isArray(d.items)) {
+    // Some backends return plain list under another key; pass through as-is
+    return parsed;
+  }
+  return parsed;
 }
 
 // PUBLIC_INTERFACE

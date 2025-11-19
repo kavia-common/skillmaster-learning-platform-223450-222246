@@ -36,7 +36,11 @@ export default function LessonsList() {
       .then(([m, l]) => {
         if (!mounted) return;
         setMod(m?.data || null);
-        const items = Array.isArray(l.data?.items) ? l.data.items : Array.isArray(l.data) ? l.data : [];
+        const items = Array.isArray(l.data?.items)
+          ? l.data.items
+          : Array.isArray(l.data)
+          ? l.data
+          : (Array.isArray(l.data?.results) ? l.data.results : []);
         setLessons(items);
         const totalCount = typeof l.data?.total === "number" ? l.data.total : page * 12 + (items.length === 12 ? 12 : 0);
         setTotal(totalCount);

@@ -26,7 +26,10 @@ In the project directory, you can run:
    - /subjects/:id/modules — modules appear
    - /modules/:id/lessons — lessons appear
    - /learn/:lessonId — progress calls should work
-If troubleshooting, visit /__backend_help for quick checks.
+
+If troubleshooting:
+- Visit http://localhost:3000/__backend_help (shows current API base and quick links)
+- Ensure backend seeded data by running: PYTHONPATH=backend python3 -m src.seeds.run_all_seeds
 
 Runs the app in development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.

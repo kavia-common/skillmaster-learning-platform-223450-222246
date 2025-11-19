@@ -36,7 +36,11 @@ export default function ModulesList() {
       .then(([s, m]) => {
         if (!mounted) return;
         setSubject(s?.data || null);
-        const items = Array.isArray(m.data?.items) ? m.data.items : Array.isArray(m.data) ? m.data : [];
+        const items = Array.isArray(m.data?.items)
+          ? m.data.items
+          : Array.isArray(m.data)
+          ? m.data
+          : (Array.isArray(m.data?.results) ? m.data.results : []);
         setModules(items);
         const totalCount = typeof m.data?.total === "number" ? m.data.total : page * 12 + (items.length === 12 ? 12 : 0);
         setTotal(totalCount);
