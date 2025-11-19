@@ -11,6 +11,7 @@ export default function BackendHelp() {
   const checks = [
     { path: "/", label: "Health (/)" },
     { path: "/docs", label: "OpenAPI Docs (/docs)" },
+    { path: "/__run_seeds", label: "Run Seeds Helper (/__run_seeds)" },
     { path: "/skills", label: "Relational Skills (/skills)" },
     { path: "/content/skills", label: "Catalog Skills (/content/skills)" },
     { path: "/subjects", label: "Subjects (/subjects)" },

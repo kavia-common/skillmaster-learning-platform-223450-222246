@@ -47,10 +47,10 @@ export default function AppRouter() {
         {/* Alias to directly test the catalog page variant */}
         <Route path="/skills-catalog" element={<SkillsCatalog />} />
 
-        {/* Keep legacy for tests linking by internal ID */}
+        {/* Keep relational detail by internal ID (explicit name to avoid confusion) */}
         <Route path="/skills/:skillId" element={<SkillDetail />} />
 
-        {/* New slug-based detail (also matches :skillId but provides new UX) */}
+        {/* New slug-based detail for content catalog */}
         <Route path="/skills/:slug" element={<SkillDetailNew />} />
 
         {/* New lesson detail route as requested (catalog variant) */}

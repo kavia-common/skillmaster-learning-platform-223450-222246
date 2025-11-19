@@ -10,6 +10,11 @@
 - Or hit the helper endpoint in a browser:
   http://localhost:3001/__run_seeds
 
+CORS:
+- Confirm FastAPI includes CORSMiddleware with:
+  allow_origins=["http://localhost:3000"], allow_credentials=True,
+  allow_methods=["*"], allow_headers=["*"]
+
 3) Manual endpoint checks (expect HTTP 200):
 - http://localhost:3001/skills
 - http://localhost:3001/content/skills

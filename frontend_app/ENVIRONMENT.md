@@ -11,6 +11,17 @@ This frontend consumes the backend catalog and relational APIs.
   - Tip: When running locally, keep ports aligned with CORS config: frontend 3000, backend 3001.
 
 Copy .env.example to .env and adjust as needed.
+Important:
+- The frontend includes credentials: 'include' on all fetches.
+- Ensure the FastAPI backend CORS allows origin http://localhost:3000 and allow_credentials=True.
+- You can verify backend is seeded and routes respond:
+  - http://localhost:3001/__run_seeds (if available)
+  - http://localhost:3001/skills
+  - http://localhost:3001/content/skills
+  - http://localhost:3001/subjects
+  - http://localhost:3001/subjects/1/modules
+  - http://localhost:3001/modules/1/lessons
+- From the frontend, visit http://localhost:3000/__backend_help for quick diagnostics.
 
 CORS requirements:
 - Backend must allow origin http://localhost:3000

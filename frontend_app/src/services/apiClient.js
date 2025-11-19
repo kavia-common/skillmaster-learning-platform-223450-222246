@@ -39,6 +39,8 @@ async function parseJsonSafe(response) {
 
 /**
  * Internal request function using fetch.
+ * Note: credentials are sent as "include" by default for all requests.
+ * Ensure FastAPI CORS is configured to allow origin http://localhost:3000 and allow_credentials=True.
  */
 async function request(path, options = {}) {
   const startedAt = performance.now();
