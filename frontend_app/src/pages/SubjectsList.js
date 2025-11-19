@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import EntityCard from "../components/common/EntityCard";
 import ProgressBar from "../components/common/ProgressBar";
-import { listSubjects, runSeeds as runRelationalSeeds, baseUrl as apiBaseUrl } from "../api/relationalClient";
+import { listSubjects, baseUrl as apiBaseUrl } from "../api/relationalClient";
 
 /**
  * PUBLIC_INTERFACE
@@ -38,8 +38,11 @@ export default function SubjectsList() {
           ? res.data.items
           : Array.isArray(res.data)
           ? res.data
-          : (Array.isArray(res.data?.results) ? res.data.results : []);
-        const totalCount = typeof res.data?.total === "number" ? res.data.total : page * 12 + (data.length === 12 ? 12 : 0);
+          : Array.isArray(res.data?.results)
+          ? res.data.results
+          : [];
+        const totalCount =
+          typeof res.data?.total === "number" ? res.data.total : page * 12 + (data.length === 12 ? 12 : 0);
         setItems(data);
         setTotal(totalCount);
       })
@@ -48,7 +51,9 @@ export default function SubjectsList() {
         setErr(e.message || "Failed to load subjects");
       })
       .finally(() => mounted && setLoading(false));
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [searchParam, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / 12));
@@ -78,15 +83,28 @@ export default function SubjectsList() {
         </p>
       </header>
 
-      <form onSubmit={submitSearch} role="search" aria-label="Subject search" style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: ".5rem", marginBottom: ".75rem" }}>
-        <label className="visually-hidden" htmlFor="subject-search">Search subjects</label>
+      <form
+        onSubmit={submitSearch}
+        role="search"
+        aria-label="Subject search"
+        style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: ".5rem", marginBottom: ".75rem" }}
+      >
+        <label className="visually-hidden" htmlFor="subject-search">
+          Search subjects
+        </label>
         <input
           id="subject-search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search by title…"
           type="search"
-          style={{ padding: ".6rem .75rem", borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)" }}
+          style={{
+            padding: ".6rem .75rem",
+            borderRadius: 8,
+            border: "1px solid var(--border)",
+            background: "var(--surface)",
+            color: "var(--text)",
+          }}
         />
         <button type="submit" className="btn">🔎 Search</button>
       </form>
@@ -94,6 +112,9 @@ export default function SubjectsList() {
       {err && (
         <div role="alert" className="card" style={{ padding: ".75rem", borderColor: "var(--error)" }}>
           <strong style={{ color: "var(--error)" }}>Error:</strong> <span>{String(err)}</span>
+          <div style={{ marginTop: ".5rem", color: "var(--muted)", whiteSpace: "pre-wrap" }}>
+            If this is a CORS/preflight failure, ensure backend CORSMiddleware allow_origins includes your frontend origin and allow_credentials=True.
+          </div>
         </div>
       )}
 
@@ -109,7 +130,11 @@ export default function SubjectsList() {
                 description={s.description || ""}
                 meta={<ProgressBar value={placeholderProgress} label="Progress" />}
                 actions={
-                  <Link className="btn" to={`/subjects/${encodeURIComponent(s.id ?? s.slug ?? idx)}/modules`} aria-label={`View modules for ${s.title || s.id}`}>
+                  <Link
+                    className="btn"
+                    to={`/subjects/${encodeURIComponent(s.id ?? s.slug ?? idx)}/modules`}
+                    aria-label={`View modules for ${s.title || s.id}`}
+                  >
                     View Modules
                   </Link>
                 }
@@ -122,39 +147,27 @@ export default function SubjectsList() {
                   Backend API base: <code>{apiBaseUrl}</code>
                 </p>
                 <div style={{ display: "flex", gap: ".5rem", marginTop: ".5rem", flexWrap: "wrap" }}>
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={async () => {
-                      const ok = await runRelationalSeeds();
-                      if (ok) {
-                        // reload current page
-                        navigate(0);
-                      } else {
-                        setErr("Seeding failed. Open Backend Help for details.");
-                      }
-                    }}
-                  >
-                    Seed data and reload
-                  </button>
                   <a className="btn btn-secondary" href={`${apiBaseUrl}/__backend_help`} target="_blank" rel="noreferrer">
                     Backend Help
                   </a>
                 </div>
-                <p style={{ margin: ".5rem 0 0", color: "var(--muted)" }}>
-                  Manual seed: <code>PYTHONPATH=backend python3 -m src.seeds.run_all_seeds</code>
-                </p>
-                <p style={{ margin: ".25rem 0 0", color: "var(--muted)" }}>
-                  Expected CORS: <code>Access-Control-Allow-Origin: {window.location.origin}</code> and <code>Access-Control-Allow-Credentials: true</code>
+                <p style={{ margin: ".25rem 0 0", color: "var(--muted)", whiteSpace: "pre-wrap" }}>
+                  Expected CORS: Access-Control-Allow-Origin: {typeof window !== "undefined" ? window.location.origin : "<frontend-origin>"} and Access-Control-Allow-Credentials: true
                 </p>
               </div>
             )}
           </div>
 
           <nav aria-label="Pagination" style={{ display: "flex", gap: ".5rem", alignItems: "center", marginTop: "1rem" }}>
-            <button className="btn btn-secondary" type="button" onClick={() => setPage(Math.max(1, page - 1))} disabled={page <= 1}>← Prev</button>
-            <span style={{ color: "var(--muted)" }}>Page {page} of {totalPages}</span>
-            <button className="btn btn-secondary" type="button" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page >= totalPages}>Next →</button>
+            <button className="btn btn-secondary" type="button" onClick={() => setPage(Math.max(1, page - 1))} disabled={page <= 1}>
+              ← Prev
+            </button>
+            <span style={{ color: "var(--muted)" }}>
+              Page {page} of {Math.max(1, Math.ceil(total / 12))}
+            </span>
+            <button className="btn btn-secondary" type="button" onClick={() => setPage(page + 1)}>
+              Next →
+            </button>
           </nav>
         </>
       )}

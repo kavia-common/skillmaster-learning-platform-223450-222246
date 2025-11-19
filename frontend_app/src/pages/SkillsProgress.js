@@ -4,26 +4,12 @@ import ProgressBar from "../components/common/ProgressBar";
 import { Link } from "react-router-dom";
 import { useAppState } from "../state/store";
 import { fetchSkills as fetchCatalogSkills } from "../api/catalogClient";
-import relationalApi from "../api/relationalClient";
+import relationalApi, { baseUrl as apiBaseUrl } from "../api/relationalClient";
+import { getApiBase } from "../services/apiClient";
 
 /**
  * PUBLIC_INTERFACE
  * SkillsProgress - Lists skills grouped by progressive levels with per-skill progress bars.
- *
- * Data sources:
- * - Skills:
- *    - Prefer relational GET /skills?level=... (via catalogClient.fetchSkills with subject_slug/level)
- *    - Fallback to GET /content/skills (handled in client)
- * - Progress:
- *    - GET /progress/{user_id} for aggregated entries
- *
- * Aggregation:
- * - Computes per-skill completion percent: completed lesson entries / total lesson entries for that skill (best effort).
- * - If no entries for a skill, progress is 0%.
- *
- * Navigation:
- * - "View Modules" -> /skills/:id (relational detail) where lessons are accessible
- * - "Browse Lessons" also available if content-only skills; falls back to /skills/:slug
  */
 export default function SkillsProgress() {
   const { state, actions } = useAppState();
@@ -32,62 +18,69 @@ export default function SkillsProgress() {
   const [skills, setSkills] = useState([]);
   const [progressEntries, setProgressEntries] = useState([]);
   const [error, setError] = useState("");
-  const [apiBase, setApiBase] = useState(() => {
-    try {
-      const m = require("../api/relationalClient");
-      return m?.baseUrl || "";
-    } catch {
-      return "";
-    }
-  });
+  const [hint, setHint] = useState("");
+  const [apiBase, setApiBase] = useState(getApiBase());
 
-  // Fetch skills once (all levels) and user progress
+  // Fetch skills once and user progress
   useEffect(() => {
     let mounted = true;
     setError("");
+    setHint("");
     actions.setLoading(true);
 
     const load = async () => {
       try {
-        // Preflight: HEAD/GET openapi.json
-        const base = apiBase || "";
+        // Probe backend openapi.json quickly to surface CORS/health early
         try {
-          const head = await fetch(`${base}/openapi.json`, { method: "HEAD", credentials: "include", mode: "cors" });
+          const head = await fetch(`${apiBase}/openapi.json`, {
+            method: "HEAD",
+            credentials: "include",
+            mode: "cors",
+          });
           if (!head.ok) {
-            // try GET
-            const get = await fetch(`${base}/openapi.json`, { method: "GET", credentials: "include", mode: "cors" });
+            const get = await fetch(`${apiBase}/openapi.json`, {
+              method: "GET",
+              credentials: "include",
+              mode: "cors",
+            });
             if (!get.ok) {
               throw new Error(`Backend openapi.json probe failed with status ${get.status}`);
             }
           }
         } catch (e) {
           throw new Error(
-            `Cannot reach backend at ${base}. ${e?.message || e}. Check server, CORS, or REACT_APP_API_BASE.`
+            `Cannot reach backend at ${apiBase}. ${e?.message || e}. Check server, CORS, or REACT_APP_API_BASE.`
           );
         }
 
-        // Load skills - fetch without filters to get a broad list
+        // Load skills
         const resSkills = await fetchCatalogSkills({ limit: 100, offset: 0 });
         const skillsArr = Array.isArray(resSkills?.data) ? resSkills.data : [];
+
         // Load progress entries for the user
-        const resProgress = await relationalApi.getUserProgress(userId).catch(async () => {
-          // If aggregated endpoint not available, fallback to paged list
-          const alt = await fetch(`${base}/progress?user_id=${encodeURIComponent(userId)}&page_size=200`, {
-            method: "GET",
-            credentials: "include",
-            headers: { Accept: "application/json" },
-            mode: "cors",
+        const resProgress = await relationalApi
+          .getUserProgress(userId)
+          .catch(async (e) => {
+            // fallback to list progress endpoint
+            const alt = await fetch(
+              `${apiBase}/progress?user_id=${encodeURIComponent(userId)}&page_size=200`,
+              {
+                method: "GET",
+                credentials: "include",
+                headers: { Accept: "application/json" },
+                mode: "cors",
+              }
+            );
+            const data = alt.ok ? await alt.json() : { items: [] };
+            const items = Array.isArray(data?.progress?.entries)
+              ? data.progress.entries
+              : Array.isArray(data?.items)
+              ? data.items
+              : Array.isArray(data)
+              ? data
+              : [];
+            return { data: { progress: { entries: items } } };
           });
-          const data = alt.ok ? await alt.json() : { items: [] };
-          const items = Array.isArray(data?.progress?.entries)
-            ? data.progress.entries
-            : Array.isArray(data?.items)
-            ? data.items
-            : Array.isArray(data)
-            ? data
-            : [];
-          return { data: { progress: { entries: items } } };
-        });
 
         if (!mounted) return;
         setSkills(skillsArr);
@@ -96,6 +89,7 @@ export default function SkillsProgress() {
       } catch (e) {
         if (!mounted) return;
         setError(e?.message || "Failed to load skills or progress");
+        if (e?.uiHint) setHint(e.uiHint);
       } finally {
         if (mounted) actions.setLoading(false);
       }
@@ -105,9 +99,9 @@ export default function SkillsProgress() {
     return () => {
       mounted = false;
     };
-  }, [userId, actions]);
+  }, [userId, actions, apiBase]);
 
-  // Index progress by skill_id and compute a naive completion percentage
+  // Index progress by skill_id and compute completion percentage
   const progressBySkill = useMemo(() => {
     const map = new Map();
     for (const e of progressEntries) {
@@ -122,7 +116,6 @@ export default function SkillsProgress() {
   }, [progressEntries]);
 
   function getSkillProgress(skill) {
-    // Try id then slug/name as fallback keys
     const keys = [skill?.id, skill?.slug, skill?.name].map((x) => (x == null ? "" : String(x)));
     for (const k of keys) {
       if (!k) continue;
@@ -142,8 +135,7 @@ export default function SkillsProgress() {
       Unknown: [],
     };
     (Array.isArray(skills) ? skills : []).forEach((s) => {
-      const level =
-        (s.level || s.difficulty || "").toString().toLowerCase() || "unknown";
+      const level = (s.level || s.difficulty || "").toString().toLowerCase() || "unknown";
       const key =
         level.startsWith("beginner")
           ? "Beginner"
@@ -225,11 +217,17 @@ export default function SkillsProgress() {
       </header>
 
       {error && (
-        <div role="alert" className="card" style={{ padding: ".75rem", borderColor: "var(--error)", marginBottom: ".75rem" }}>
+        <div role="alert" className="card" style={{ padding: ".75rem", borderColor: "var(--error)", marginBottom: ".75rem", whiteSpace: "pre-wrap" }}>
           <strong style={{ color: "var(--error)" }}>Error:</strong> <span>{String(error)}</span>
-          <div style={{ marginTop: ".5rem", color: "var(--muted)" }}>
-            Ensure the backend is running and seeded. See <a href="/__backend_help">Backend Help</a>.
-          </div>
+          {hint ? (
+            <div style={{ marginTop: ".5rem", color: "var(--muted)" }}>
+              {hint}
+            </div>
+          ) : (
+            <div style={{ marginTop: ".5rem", color: "var(--muted)" }}>
+              Ensure the backend is running and seeded. See <a href="/__backend_help">Backend Help</a>.
+            </div>
+          )}
         </div>
       )}
 
