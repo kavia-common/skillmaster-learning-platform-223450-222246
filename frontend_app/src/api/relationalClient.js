@@ -151,6 +151,36 @@ export async function listActivitiesByLesson(lessonId, { page = 1, page_size = 2
   if (page) qs.set("page", String(page));
   if (page_size) qs.set("page_size", String(page_size));
   const url = `${BASE_URL}/lessons/${encodeURIComponent(LessonIdToNumber(lessonId))}/activities${
+>>>>>>> REPLACE   
+`````
+
+Explanation: Add a defensive normalization for subjects/modules list shape to array to avoid empty renders if backend returns {items,total}.
+
+````edit file="skillmaster-learning-platform-223450-222246/frontend_app/src/api/relationalClient.js"      
+<<<<<<< SEARCH
+  const parsed = await handleResponse(res);
+  // Normalize common shapes to { items, total }
+  const d = parsed.data;
+  if (Array.isArray(d)) {
+    return { ...parsed, data: { items: d, total: d.length } };
+  }
+  if (d && typeof d === "object" && !Array.isArray(d.items)) {
+    // Some backends return plain list under another key; pass through as-is
+    return parsed;
+  }
+  return parsed;
+=======
+  const parsed = await handleResponse(res);
+  // Normalize common shapes to { items, total }
+  const d = parsed.data;
+  if (Array.isArray(d)) {
+    return { ...parsed, data: { items: d, total: d.length } };
+  }
+  if (d && typeof d === "object") {
+    if (Array.isArray(d.items)) return { ...parsed, data: { items: d.items, total: d.total ?? d.items.length } };
+    if (Array.isArray(d.results)) return { ...parsed, data: { items: d.results, total: d.total ?? d.results.length } };
+  }
+  return parsed;
     qs.toString() ? `?${qs.toString()}` : ""
   }`;
   return handleResponse(
