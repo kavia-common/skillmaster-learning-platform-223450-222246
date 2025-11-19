@@ -1,26 +1,12 @@
+import config from "../config/env";
+
 //
 // PUBLIC_INTERFACE
 // catalogClient.js - Thin API layer for catalog endpoints (skills, lessons)
-// Reads base URL from REACT_APP_BACKEND_URL (or REACT_APP_API_BASE), with a preview-friendly fallback.
+// Aligned with FastAPI routes: /content/skills, /content/skills/{slug}, /content/skills/{slug}/lessons,
+// with graceful fallbacks to /skills and related endpoints.
 //
-const pickBaseUrl = () => {
-  const envBase =
-    (process.env.REACT_APP_API_BASE && process.env.REACT_APP_API_BASE.trim()) ||
-    (process.env.REACT_APP_BACKEND_URL && process.env.REACT_APP_BACKEND_URL.trim());
-
-  if (envBase) return envBase.replace(/\/+$/, "");
-
-  // Fallback: try to replace common local dev port 3000 -> 3001
-  try {
-    const origin = window.location.origin;
-    if (origin.includes(":3000")) return origin.replace(":3000", ":3001");
-    return origin;
-  } catch {
-    return "http://localhost:3001";
-  }
-};
-
-const BASE_URL = pickBaseUrl();
+const BASE_URL = config.apiBaseUrl;
 
 async function handleResponse(res) {
   const text = await res.text();
@@ -44,36 +30,50 @@ async function handleResponse(res) {
   return { status: res.status, ok: true, data, headers: res.headers };
 }
 
+function toPageParams(limit = 12, offset = 0) {
+  const pageSize = Math.max(1, Number(limit) || 12);
+  const page = Math.max(1, Math.floor((Number(offset) || 0) / pageSize) + 1);
+  return { page, page_size: pageSize };
+}
+
 // PUBLIC_INTERFACE
 export async function fetchSkills({ category, limit = 12, offset = 0 } = {}) {
   /**
    * Retrieve paginated skills, optionally filtered by category.
-   * @param {object} params
-   * @param {string} [params.category]
-   * @param {number} [params.limit=12]
-   * @param {number} [params.offset=0]
-   * @returns {Promise<{status:number, ok:boolean, data:any[]}>}
+   * Maps to GET /content/skills with page/page_size, falling back to /skills (array) if needed.
    */
+  const { page, page_size } = toPageParams(limit, offset);
   const qs = new URLSearchParams();
   if (category) qs.set("category", category);
-  if (limit != null) qs.set("limit", String(limit));
-  if (offset != null) qs.set("offset", String(offset));
-  const url = `${BASE_URL}/api/catalog/skills${qs.toString() ? `?${qs.toString()}` : ""}`;
+  qs.set("page", String(page));
+  qs.set("page_size", String(page_size));
+
+  // Prefer content library (supports pagination and filters)
+  const url = `${BASE_URL}/content/skills${qs.toString() ? `?${qs.toString()}` : ""}`;
   const res = await fetch(url, {
     method: "GET",
     headers: { Accept: "application/json" },
     credentials: "include",
   });
-  return handleResponse(res);
+
+  if (res.ok) return handleResponse(res);
+
+  // Fallback: legacy /skills (returns array)
+  const fallback = await fetch(`${BASE_URL}/skills`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    credentials: "include",
+  });
+  return handleResponse(fallback);
 }
 
 // PUBLIC_INTERFACE
 export async function fetchSkillBySlug(slug) {
   /**
-   * Retrieve a single skill by slug (if backend supports), otherwise fall back to list + find.
-   * @param {string} slug
+   * Retrieve a single skill by slug, preferring /content/skills/{slug}.
+   * Fallbacks: /skills/{id} or searching /skills array by slug/name.
    */
-  const primary = `${BASE_URL}/api/catalog/skills/${encodeURIComponent(slug)}`;
+  const primary = `${BASE_URL}/content/skills/${encodeURIComponent(slug)}`;
   const res = await fetch(primary, {
     method: "GET",
     headers: { Accept: "application/json" },
@@ -81,8 +81,16 @@ export async function fetchSkillBySlug(slug) {
   });
   if (res.ok) return handleResponse(res);
 
-  // Fallback: best-effort fetch from list and find by id/slug
-  const list = await fetch(`${BASE_URL}/api/catalog/skills`, {
+  // Fallback by ID path (numeric/integer ids likely for relational /skills/{skill_id})
+  const byId = await fetch(`${BASE_URL}/skills/${encodeURIComponent(slug)}`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    credentials: "include",
+  });
+  if (byId.ok) return handleResponse(byId);
+
+  // Fallback: search in /skills list
+  const list = await fetch(`${BASE_URL}/skills`, {
     method: "GET",
     headers: { Accept: "application/json" },
     credentials: "include",
@@ -90,7 +98,7 @@ export async function fetchSkillBySlug(slug) {
 
   const found =
     Array.isArray(list.data) &&
-    list.data.find((s) => s.slug === slug || s.id === slug || s.name === slug);
+    list.data.find((s) => s.slug === slug || String(s.id) === String(slug) || s.name === slug);
   if (!found) {
     const e = new Error("Skill not found");
     e.status = 404;
@@ -102,10 +110,9 @@ export async function fetchSkillBySlug(slug) {
 // PUBLIC_INTERFACE
 export async function fetchLessonsBySkillSlug(slug) {
   /**
-   * Retrieve lessons for a given skill slug.
-   * @param {string} slug
+   * Retrieve lessons for a given skill slug via /content/skills/{slug}/lessons.
    */
-  const url = `${BASE_URL}/api/catalog/lessons?skill_slug=${encodeURIComponent(slug)}`;
+  const url = `${BASE_URL}/content/skills/${encodeURIComponent(slug)}/lessons`;
   const res = await fetch(url, {
     method: "GET",
     headers: { Accept: "application/json" },
@@ -117,45 +124,26 @@ export async function fetchLessonsBySkillSlug(slug) {
 // PUBLIC_INTERFACE
 export async function fetchLessonById(id, { skillSlug } = {}) {
   /**
-   * Retrieve a single lesson by id. If no direct endpoint exists, fetch lessons for skill and find.
-   * @param {string} id
-   * @param {{skillSlug?: string}} options
+   * Retrieve a single lesson by id or slug.
+   * Tries /content/lessons/{id}, fallback to searching lessons under provided skillSlug.
    */
-  // Try a hypothetical endpoint first
-  const direct = await fetch(`${BASE_URL}/api/catalog/lessons/${encodeURIComponent(id)}`, {
+  const direct = await fetch(`${BASE_URL}/content/lessons/${encodeURIComponent(id)}`, {
     method: "GET",
     headers: { Accept: "application/json" },
     credentials: "include",
   });
   if (direct.ok) return handleResponse(direct);
 
-  // Fallback: need skillSlug to search within lessons
   if (!skillSlug) {
-    // Last resort: pull many skills and try to locate; not ideal but keeps demo functional
-    const all = await fetch(`${BASE_URL}/api/catalog/skills`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "include",
-    }).then(handleResponse);
-
-    for (const s of all.data || []) {
-      const lessonsRes = await fetch(
-        `${BASE_URL}/api/catalog/lessons?skill_slug=${encodeURIComponent(s.slug || s.id)}`,
-        { method: "GET", headers: { Accept: "application/json" }, credentials: "include" }
-      ).then(handleResponse);
-      const found = Array.isArray(lessonsRes.data)
-        ? lessonsRes.data.find((l) => l.id === id)
-        : null;
-      if (found) return { status: 200, ok: true, data: found };
-    }
-    const e = new Error("Lesson not found");
-    e.status = 404;
+    const e = new Error("Lesson not found (provide skillSlug for fallback search)");
+    e.status = direct.status || 404;
     throw e;
   }
 
   const lessons = await fetchLessonsBySkillSlug(skillSlug);
   const lesson =
-    Array.isArray(lessons.data) && lessons.data.find((l) => String(l.id) === String(id));
+    Array.isArray(lessons.data) &&
+    lessons.data.find((l) => String(l.id) === String(id) || String(l.slug) === String(id));
   if (!lesson) {
     const e = new Error("Lesson not found");
     e.status = 404;
